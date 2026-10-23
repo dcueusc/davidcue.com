@@ -573,6 +573,7 @@ function drawPage(t) {
 // Halloween: every 30 seconds lightning strikes; the clown is suddenly inside, front and center, staring.
 // Three seconds later it strikes again and he is back outside by the lamppost.
 const clownInside = { ...sprites['clown-inside'], img: sprite(sprites['clown-inside'].src) };
+const clownStreet = { ...sprites['clown-street'], img: sprite(sprites['clown-street'].src) };
 const STORM = { first: 10, every: 30, stay: 3 };
 const STRIKE = 0.7; // seconds a strike's flash and bolt last
 let bolt = null;
@@ -607,9 +608,12 @@ function drawLightning(t) {
   const level = flashLevel(k);
   $('flash').style.opacity = (level * 0.75).toFixed(3);
 
-  if (inside && ready(clownInside.img)) {
-    const [x1, y1, x2, y2] = clownInside.rect;
-    blit(clownInside.img, x1, y1, x2 - x1, y2 - y1);
+  if (inside && ready(clownInside.img) && ready(clownStreet.img)) {
+    // the street outside goes empty, and he stands in the room directly in line with where he was
+    let [x1, y1, x2, y2] = clownStreet.rect;
+    blit(clownStreet.img, x1, y1, x2 - x1, y2 - y1);
+    [x1, y1, x2, y2] = clownInside.rect;
+    blit(clownInside.img, x1 + clownInside.dx, y1, x2 - x1, y2 - y1);
   }
 
   if (level > 0) {
