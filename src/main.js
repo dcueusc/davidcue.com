@@ -28,19 +28,23 @@ function easterSunday(y) {
 function sceneForDate(now = new Date()) {
   const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate();
-  // the week leading up to a holiday: the six days before it and the day itself
-  const weekOf = (holiday) => {
-    const n = Math.round((d - holiday) / 86400000);
-    return n >= -6 && n <= 0;
-  };
   if (BIRTHDAY && m === BIRTHDAY[0] && day === BIRTHDAY[1]) return 'birthday';
   if (m === 12) return 'christmas';
   if (m === 10) return 'halloween';
-  if (weekOf(easterSunday(y))) return 'easter';
-  if (weekOf(new Date(y, 2, 17))) return 'stpatricks';
-  if (weekOf(new Date(y, 6, 4))) return 'july4';
-  const thanksgiving = new Date(y, 10, 1 + ((4 - new Date(y, 10, 1).getDay() + 7) % 7) + 21);
-  if (weekOf(thanksgiving)) return 'thanksgiving';
+  // Other holidays show for the two weeks leading up to them (the 14 days before and the day
+  // itself). Where two windows overlap, the holiday coming up soonest wins.
+  const holidays = {
+    easter: easterSunday(y),
+    stpatricks: new Date(y, 2, 17),
+    july4: new Date(y, 6, 4),
+    thanksgiving: new Date(y, 10, 1 + ((4 - new Date(y, 10, 1).getDay() + 7) % 7) + 21),
+  };
+  let soonest = null, soonestDays = Infinity;
+  for (const [id, date] of Object.entries(holidays)) {
+    const daysUntil = Math.round((date - d) / 86400000);
+    if (daysUntil >= 0 && daysUntil <= 14 && daysUntil < soonestDays) [soonest, soonestDays] = [id, daysUntil];
+  }
+  if (soonest) return soonest;
   if (m === 12 || m <= 2) return 'winter';
   if (m <= 5) return 'spring';
   if (m <= 8) return 'summer';
