@@ -29,7 +29,7 @@ export const PROFILES = {
   fall: { lights: [...EVENING, 'fire'], weather: 'leaves', embers: true },
   winter: { lights: [...EVENING, 'fire'], weather: 'snow', embers: true, tree: true },
   spring: { lights: ['lamp'], weather: 'petals', tint: 'spring' },
-  summer: { lights: ['lamp'], weather: 'fireflies', motes: true, curtain: true, curtainStop: 470, tint: 'summer' }, // stops above David's head
+  summer: { lights: ['lamp'], weather: 'fireflies', motes: true, curtain: true, tint: 'summer' },
   halloween: { lights: ['lamp', 'streetHalloween', 'fire', 'lantern', 'screen'], weather: 'darkLeaves', embers: true, lightning: true },
   birthday: { lights: [...EVENING, 'fire'], weather: 'snow', embers: true, confetti: true },
   july4: { lights: [...EVENING, 'fire'], weather: 'fireworks', embers: true, curtain: true, curtainStop: 415 }, // stops above Uncle Sam's hat
@@ -89,7 +89,7 @@ const DAVID_HANDS = {
   fall: [[355, 566, 398, 601], [398, 566, 434, 601]],
   winter: [[358, 566, 405, 601], [405, 566, 441, 601]],
   spring: [[355, 566, 400, 601], [400, 566, 441, 601]],
-  summer: [[940, 518, 964, 552], [964, 520, 990, 556]], // lying on the window seat
+  summer: [[363, 568, 405, 602], [405, 568, 437, 602]],
   halloween: [[350, 566, 380, 602], [380, 566, 410, 602]],
   birthday: [[356, 566, 398, 600], [398, 566, 432, 600]],
   july4: [[360, 568, 402, 600], [402, 568, 445, 600]],
@@ -122,10 +122,9 @@ export const GOLD = [[1296, 696, 1424, 726], [912, 832, 1408, 872]];
 export const HOTSPOTS = [
   { id: 'bookshelf', label: 'Bookshelf', rect: [322, 85, 505, 400] },
   { id: 'heroes', label: 'GOATs', rect: [1458, 335, 1512, 408] },
-  { id: 'me', label: 'David', rect: [240, 405, 370, 560], scenes: SCENES.map((s) => s.id).filter((s) => s !== 'summer') },
+  { id: 'me', label: 'David', rect: [240, 405, 370, 560] },
   { id: 'globe', label: 'Places', rect: [0, 495, 140, 680] },
   { id: 'window', label: 'Window: change the scene', rect: [756, 100, 1075, 585] },
-  { id: 'me', label: 'David', rect: [768, 435, 1096, 614], scenes: ['summer'] }, // on the window seat, over the window
   { id: 'clock', label: 'Grandfather clock', rect: [528, 250, 624, 555] },
   { id: 'family', label: 'Family portrait', rect: [1462, 90, 1578, 322] },
   // little photo frames on the right-hand shelves (the one behind the tree's star is hidden in winter)
