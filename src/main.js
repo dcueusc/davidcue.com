@@ -12,6 +12,8 @@ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const pct = (v, total) => `${(v / total) * 100}%`;
 const rand = (a, b) => a + Math.random() * (b - a);
 const IDS = SCENES.map((s) => s.id);
+// version-stamp image URLs so a new deploy's images aren't served from old browser caches
+const bust = (src) => `${src}?v=${__BUILD__}`;
 
 // ---------- which scene for today ----------
 
@@ -75,7 +77,7 @@ const layers = Object.fromEntries(
     img.alt = '';
     img.draggable = false;
     img.className = 'layer';
-    img.dataset.src = `/img/office-${id}.webp`;
+    img.dataset.src = bust(`/img/office-${id}.webp`);
     $('layers').append(img);
     return [id, img];
   }),
@@ -419,7 +421,7 @@ function drawTreeLights(t) {
 
 // ---------- holiday characters: cut-out sprites animated in code ----------
 
-const sprite = (src) => Object.assign(new Image(), { src });
+const sprite = (src) => Object.assign(new Image(), { src: bust(src) });
 const ready = (img) => img.complete && img.naturalWidth;
 const bursts = sprites.fireworks.map((f) => ({ ...f, img: sprite(f.src), start: rand(0, 3), dx: 0 }));
 const santaSip = { ...sprites['santa-sip'], img: sprite(sprites['santa-sip'].src) };
@@ -701,7 +703,7 @@ function openPopup(id) {
     let i = c.start ?? 0;
     const show = (dir) => {
       i = (i + dir + c.photos.length) % c.photos.length;
-      $('photo-img').src = c.photos[i].src;
+      $('photo-img').src = bust(c.photos[i].src);
       $('photo-img').alt = c.photos[i].caption;
       $('photo-caption').textContent = c.photos[i].caption;
       $('photo-count').textContent = `${i + 1} / ${c.photos.length}`;
@@ -731,7 +733,7 @@ function openPopup(id) {
     const show = (d) => {
       i = (i + d + HEROES.length) % HEROES.length;
       const h = HEROES[i];
-      $('hero-img').src = h.img;
+      $('hero-img').src = bust(h.img);
       $('hero-img').alt = `Bust of ${h.name}`;
       $('hero-name').textContent = h.name;
       $('hero-why').textContent = h.why;
