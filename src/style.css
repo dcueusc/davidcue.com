@@ -338,3 +338,14 @@ a { color: var(--accent); }
 .photo-nav[hidden] { display: none; }
 .photo-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 12px; }
 .photo-nav .hero-count { margin: 0; }
+
+/* Halloween lightning: a cold flash that lights up the room, strongest from the window */
+.flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(ellipse at 57% 30%, rgba(225, 235, 255, 0.95), rgba(170, 190, 255, 0.55) 45%, rgba(120, 140, 220, 0.35) 100%);
+}

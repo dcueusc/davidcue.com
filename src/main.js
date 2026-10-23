@@ -144,6 +144,7 @@ function setScene(id) {
   $('picker-icon').textContent = meta.icon;
   document.body.dataset.scene = id;
   document.body.dataset.tint = profile.tint ?? '';
+  $('flash').style.opacity = 0;
   for (const l of lightEls) l.el.classList.toggle('lit', profile.lights.includes(l.group));
   for (const [el, h] of hotspotEls) el.hidden = !!h.scenes && !h.scenes.includes(id);
   resetParticles();
@@ -569,6 +570,73 @@ function drawPage(t) {
   actx.restore();
 }
 
+// Halloween: every minute lightning strikes; the clown is suddenly inside, front and center, staring.
+// Three seconds later it strikes again and he is back outside by the lamppost.
+const clownInside = { ...sprites['clown-inside'], img: sprite(sprites['clown-inside'].src) };
+const STORM = { first: 15, every: 60, stay: 3 };
+const STRIKE = 0.7; // seconds a strike's flash and bolt last
+let bolt = null;
+
+// flash brightness over a strike: a hard flash, a dip, a second flicker, then fading
+function flashLevel(k) {
+  if (k < 0 || k > STRIKE) return 0;
+  if (k < 0.06) return 1;
+  if (k < 0.12) return 0.25;
+  if (k < 0.2) return 0.85;
+  return 0.85 * (1 - (k - 0.2) / (STRIKE - 0.2));
+}
+
+function makeBolt() {
+  const pts = [[rand(800, 1040), 100]];
+  while (pts[pts.length - 1][1] < 330) {
+    const [x, y] = pts[pts.length - 1];
+    pts.push([x + rand(-22, 22), y + rand(14, 30)]);
+  }
+  const fork = pts.slice(0, Math.floor(rand(3, pts.length - 2)) + 1);
+  const [fx, fy] = fork[fork.length - 1];
+  const branch = [[fx, fy]];
+  for (let i = 0; i < 4; i++) branch.push([branch[i][0] + rand(8, 20) * (Math.random() < 0.5 ? -1 : 1), branch[i][1] + rand(10, 22)]);
+  return [pts, branch];
+}
+
+function drawLightning(t) {
+  // time into the current storm cycle; strikes at 0 (clown comes in) and at `stay` (he leaves)
+  const c = t < STORM.first ? -1 : (t - STORM.first) % STORM.every;
+  const inside = c >= 0 && c < STORM.stay;
+  const k = c < 0 ? -1 : c < STORM.stay ? c : c - STORM.stay;
+  const level = flashLevel(k);
+  $('flash').style.opacity = (level * 0.75).toFixed(3);
+
+  if (inside && ready(clownInside.img)) {
+    const [x1, y1, x2, y2] = clownInside.rect;
+    blit(clownInside.img, x1, y1, x2 - x1, y2 - y1);
+  }
+
+  if (level > 0) {
+    if (!bolt || k < 0.02) bolt = makeBolt();
+    actx.save();
+    actx.beginPath();
+    for (const [x1, y1, x2, y2] of PANES) actx.rect(x1 * scale, y1 * scale, (x2 - x1) * scale, (y2 - y1) * scale);
+    actx.clip();
+    actx.globalCompositeOperation = 'lighter';
+    actx.lineJoin = 'round';
+    for (const [w, color] of [[7, 'rgba(160, 180, 255, 0.35)'], [2.5, 'rgba(240, 245, 255, 0.95)']]) {
+      actx.strokeStyle = color;
+      actx.lineWidth = w * scale;
+      for (const line of bolt) {
+        actx.beginPath();
+        line.forEach(([x, y], i) => (i ? actx.lineTo(x * scale, y * scale) : actx.moveTo(x * scale, y * scale)));
+        actx.globalAlpha = Math.min(1, level * 1.2);
+        actx.stroke();
+      }
+    }
+    actx.restore();
+    actx.globalAlpha = 1;
+  } else {
+    bolt = null;
+  }
+}
+
 function updateAnim(t, now) {
   actx.clearRect(0, 0, animCanvas.width, animCanvas.height);
   const img = layers[scene];
@@ -582,6 +650,7 @@ function updateAnim(t, now) {
   if (profile.santa) drawSanta(t);
   if (profile.turkey) drawTurkey(now);
   if (profile.pilgrim) drawPage(t);
+  if (profile.lightning) drawLightning(t);
 }
 
 // ---------- hotspots + popup ----------
