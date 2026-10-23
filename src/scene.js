@@ -89,7 +89,7 @@ const DAVID_HANDS = {
   fall: [[355, 566, 398, 601], [398, 566, 434, 601]],
   winter: [[358, 566, 405, 601], [405, 566, 441, 601]],
   spring: [[355, 566, 400, 601], [400, 566, 441, 601]],
-  summer: [[957, 529, 979, 556], [979, 529, 1002, 558]], // lying on the window seat
+  summer: [[940, 518, 964, 552], [964, 520, 990, 556]], // lying on the window seat
   halloween: [[350, 566, 380, 602], [380, 566, 410, 602]],
   birthday: [[356, 566, 398, 600], [398, 566, 432, 600]],
   july4: [[360, 568, 402, 600], [402, 568, 445, 600]],
@@ -125,7 +125,7 @@ export const HOTSPOTS = [
   { id: 'me', label: 'David', rect: [240, 405, 370, 560], scenes: SCENES.map((s) => s.id).filter((s) => s !== 'summer') },
   { id: 'globe', label: 'Places', rect: [0, 495, 140, 680] },
   { id: 'window', label: 'Window: change the scene', rect: [756, 100, 1075, 585] },
-  { id: 'me', label: 'David', rect: [808, 455, 1096, 612], scenes: ['summer'] }, // on the window seat, over the window
+  { id: 'me', label: 'David', rect: [768, 435, 1096, 614], scenes: ['summer'] }, // on the window seat, over the window
   { id: 'clock', label: 'Grandfather clock', rect: [528, 250, 624, 555] },
   { id: 'family', label: 'Family portrait', rect: [1462, 90, 1578, 322] },
   // little photo frames on the right-hand shelves (the one behind the tree's star is hidden in winter)
