@@ -570,10 +570,10 @@ function drawPage(t) {
   actx.restore();
 }
 
-// Halloween: every minute lightning strikes; the clown is suddenly inside, front and center, staring.
+// Halloween: every 30 seconds lightning strikes; the clown is suddenly inside, front and center, staring.
 // Three seconds later it strikes again and he is back outside by the lamppost.
 const clownInside = { ...sprites['clown-inside'], img: sprite(sprites['clown-inside'].src) };
-const STORM = { first: 15, every: 60, stay: 3 };
+const STORM = { first: 10, every: 30, stay: 3 };
 const STRIKE = 0.7; // seconds a strike's flash and bolt last
 let bolt = null;
 
@@ -751,14 +751,6 @@ popup.addEventListener('click', (e) => {
   if (e.target === popup) popup.close();
 });
 
-// The window steps through the four seasons; from a holiday it goes to that holiday's season.
-const SEASON_ORDER = ['winter', 'spring', 'summer', 'fall'];
-const HOLIDAY_SEASON = { birthday: 'winter', christmas: 'winter', stpatricks: 'spring', easter: 'spring', july4: 'summer', halloween: 'fall', thanksgiving: 'fall' };
-function nextSeason(id) {
-  if (HOLIDAY_SEASON[id]) return HOLIDAY_SEASON[id];
-  return SEASON_ORDER[(SEASON_ORDER.indexOf(id) + 1) % SEASON_ORDER.length];
-}
-
 const hotspotEls = [];
 for (const h of HOTSPOTS) {
   const [x1, y1, x2, y2] = h.rect;
@@ -769,7 +761,7 @@ for (const h of HOTSPOTS) {
   Object.assign(b.style, { left: pct(x1, W), top: pct(y1, H), width: pct(x2 - x1, W), height: pct(y2 - y1, H) });
   b.addEventListener('click', () => {
     if (h.id === 'me') $('about').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' });
-    else if (h.id === 'window') setScene(nextSeason(scene));
+    else if (h.id === 'window') setScene(IDS[(IDS.indexOf(scene) + 1) % IDS.length]);
     else openPopup(h.id);
   });
   $('hotspots').append(b);
