@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>David Sumner Cue</title>
+    <meta name="description" content="David Sumner Cue's office in Beacon Hill, Boston." />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header class="scene" id="scene">
+      <div class="frame" id="frame">
+        <div class="layers" id="layers"></div>
+        <canvas class="anim" id="anim"></canvas>
+        <div class="tint" id="tint"></div>
+        <div class="lights" id="lights"></div>
+        <canvas class="fx" id="fx"></canvas>
+        <div class="vignette"></div>
+        <div class="hotspots" id="hotspots"></div>
+      </div>
+      <div class="picker" id="picker">
+        <button class="picker-button" id="picker-button" aria-haspopup="menu" aria-expanded="false" aria-controls="picker-menu" title="Change the scene">
+          <svg class="picker-cal" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges">
+            <path fill="currentColor" d="M3 1h2v2H3zM11 1h2v2h-2zM1 3h14v12H1zM2 7v7h12V7z" />
+            <path fill="currentColor" d="M4 9h2v2H4zM7 9h2v2H7zM10 9h2v2h-2zM4 12h2v1H4zM7 12h2v1H7z" />
+          </svg>
+          <span class="picker-icon" id="picker-icon" aria-hidden="true"></span>
+          <span id="picker-label"></span>
+          <span class="picker-caret" aria-hidden="true">▾</span>
+        </button>
+        <ul class="picker-menu" id="picker-menu" role="menu" aria-label="Scenes"></ul>
+      </div>
+      <p class="hint">click around the office</p>
+    </header>
+
+    <main class="content">
+      <section id="about">
+        <div class="intro">
+          <h1>David Sumner Cue</h1><span class="sep">·</span>Software Engineer<span class="sep">·</span>San Francisco<span class="sep">·</span>University of Southern California '26<span class="sep">·</span>Builder.<span class="sep">·</span><a href="https://www.linkedin.com/in/david-c-2301b3219/" target="_blank" rel="noopener">LinkedIn</a><span class="sep">·</span><a href="mailto:davidsumnercue@gmail.com">davidsumnercue@gmail.com</a>
+        </div>
+      </section>
+    </main>
+
+    <dialog class="popup" id="popup">
+      <form method="dialog">
+        <button class="close" aria-label="Close">×</button>
+      </form>
+      <p class="popup-kicker" id="popup-kicker"></p>
+      <h2 id="popup-title"></h2>
+      <div class="popup-body" id="popup-body"></div>
+    </dialog>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

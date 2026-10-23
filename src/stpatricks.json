@@ -1,0 +1,70 @@
+{
+ "toss": {
+  "rect": [
+   120,
+   40,
+   560,
+   520
+  ],
+  "frames": [
+   "/img/sprites/toss-0.webp",
+   "/img/sprites/toss-1.webp",
+   "/img/sprites/toss-2.webp",
+   "/img/sprites/toss-3.webp",
+   "/img/sprites/toss-4.webp",
+   "/img/sprites/toss-5.webp"
+  ],
+  "release": [
+   415,
+   306
+  ]
+ },
+ "swing": {
+  "pivot": [
+   725,
+   118
+  ],
+  "frames": [
+   {
+    "src": "/img/sprites/swing-0.webp",
+    "w": 138,
+    "h": 205,
+    "ax": 37.0110354409621
+   },
+   {
+    "src": "/img/sprites/swing-1.webp",
+    "w": 81,
+    "h": 220,
+    "ax": 12.954510467980295
+   },
+   {
+    "src": "/img/sprites/swing-2.webp",
+    "w": 129,
+    "h": 202,
+    "ax": 84.19642857142857
+   }
+  ]
+ },
+ "book": [
+  {
+   "src": "/img/sprites/book-0.webp",
+   "w": 39,
+   "h": 58
+  },
+  {
+   "src": "/img/sprites/book-1.webp",
+   "w": 58,
+   "h": 38
+  },
+  {
+   "src": "/img/sprites/book-2.webp",
+   "w": 39,
+   "h": 58
+  },
+  {
+   "src": "/img/sprites/book-3.webp",
+   "w": 58,
+   "h": 41
+  }
+ ]
+}
