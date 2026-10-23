@@ -54,8 +54,10 @@ function sceneForDate(now = new Date()) {
 function initialScene() {
   const q = new URLSearchParams(location.search).get('scene') ?? new URLSearchParams(location.search).get('season');
   if (IDS.includes(q)) return q;
+  // A scene picked by hand lasts for this visit only; a new visit shows the scene for the date.
   try {
-    const saved = localStorage.getItem('scene');
+    localStorage.removeItem('scene'); // older versions kept the pick forever
+    const saved = sessionStorage.getItem('scene');
     if (IDS.includes(saved)) return saved;
   } catch {}
   return sceneForDate();
@@ -131,7 +133,7 @@ function setScene(id) {
   scene = id;
   profile = PROFILES[id];
   load(id);
-  try { localStorage.setItem('scene', id); } catch {}
+  try { sessionStorage.setItem('scene', id); } catch {}
   const meta = SCENES.find((s) => s.id === id);
   for (const k of IDS) {
     layers[k].classList.toggle('on', k === id);
