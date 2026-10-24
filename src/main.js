@@ -33,13 +33,13 @@ function sceneForDate(now = new Date()) {
   if (BIRTHDAY && m === BIRTHDAY[0] && day === BIRTHDAY[1]) return 'birthday';
   if (m === 12) return 'christmas';
   if (m === 10) return 'halloween';
+  if (m === 11) return 'thanksgiving';
   // Other holidays show for the two weeks leading up to them (the 14 days before and the day
   // itself). Where two windows overlap, the holiday coming up soonest wins.
   const holidays = {
     easter: easterSunday(y),
     stpatricks: new Date(y, 2, 17),
     july4: new Date(y, 6, 4),
-    thanksgiving: new Date(y, 10, 1 + ((4 - new Date(y, 10, 1).getDay() + 7) % 7) + 21),
   };
   let soonest = null, soonestDays = Infinity;
   for (const [id, date] of Object.entries(holidays)) {
