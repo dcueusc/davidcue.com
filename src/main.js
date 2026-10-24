@@ -757,6 +757,9 @@ popup.addEventListener('click', (e) => {
   if (e.target === popup) popup.close();
 });
 
+// The window steps through the scenes in calendar order, starting from whatever is showing.
+const WINDOW_ORDER = ['fall', 'halloween', 'thanksgiving', 'birthday', 'christmas', 'winter', 'stpatricks', 'easter', 'spring', 'july4', 'summer'];
+
 const hotspotEls = [];
 for (const h of HOTSPOTS) {
   const [x1, y1, x2, y2] = h.rect;
@@ -767,7 +770,7 @@ for (const h of HOTSPOTS) {
   Object.assign(b.style, { left: pct(x1, W), top: pct(y1, H), width: pct(x2 - x1, W), height: pct(y2 - y1, H) });
   b.addEventListener('click', () => {
     if (h.id === 'me') $('about').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' });
-    else if (h.id === 'window') setScene(IDS[(IDS.indexOf(scene) + 1) % IDS.length]);
+    else if (h.id === 'window') setScene(WINDOW_ORDER[(WINDOW_ORDER.indexOf(scene) + 1) % WINDOW_ORDER.length]);
     else openPopup(h.id);
   });
   $('hotspots').append(b);
