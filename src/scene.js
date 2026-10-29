@@ -123,7 +123,7 @@ export const CURTAIN = [
 ];
 
 // New Year's Eve: the coming year hangs under the HAPPY NEW YEAR banner (center x, top y).
-export const YEAR_SIGN = { x: 962, y: 302 };
+export const YEAR_SIGN = { x: 962, y: 290 };
 
 // Thanksgiving: the pilgrim's open book. A page flips from the right edge over the spine to the left.
 export const BOOK = { spine: [1075, 607], right: [1099, 604], left: [1052, 600] };

@@ -659,7 +659,7 @@ function drawYear(t) {
   }
   const cards = [...String(new Date().getFullYear() + 1)].map((d) => digitCards[d]);
   if (!cards.every((c) => ready(c.img))) return;
-  const gap = 5;
+  const gap = 6; // the banner's letters sit about this far apart
   const total = cards.reduce((w, c) => w + c.w, 0) + gap * (cards.length - 1);
   const x0 = YEAR_SIGN.x - total / 2, y0 = YEAR_SIGN.y;
   // the string they hang from, sagging a little in the middle
