@@ -696,10 +696,14 @@ function drawWalkers(t, img) {
   if (k < 0 || k > WALK.walk) return;
   const name = cfg.names[Math.floor(since / WALK.every) % cfg.names.length];
   const step = Math.floor(k / 0.3) % 2; // two-frame walk
-  const f = walkerFrames[name][step];
+  // Washington's generated poses change his head's size and position. Keep his likeness stable
+  // and use a gentle continuous walking bob instead of snapping between those mismatched poses.
+  const steady = name === 'washington';
+  const f = walkerFrames[name][steady ? 0 : step];
   if (!ready(f.img)) return;
   const x = WALK.from + (WALK.to - WALK.from) * (k / WALK.walk);
-  const y = cfg.bottom - f.h - (step ? 2 : 0);
+  const bob = steady ? 0.65 * Math.sin(k * Math.PI / 0.3) : (step ? 2 : 0);
+  const y = cfg.bottom - f.h - bob;
   actx.save();
   actx.beginPath();
   for (const [x1, y1, x2, y2] of PANES) actx.rect(x1 * scale, y1 * scale, (x2 - x1) * scale, (y2 - y1) * scale);
