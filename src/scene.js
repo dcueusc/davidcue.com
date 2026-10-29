@@ -37,7 +37,7 @@ export const PROFILES = {
   halloween: { lights: ['lamp', 'streetHalloween', 'fire', 'lantern', 'screen'], weather: 'darkLeaves', embers: true, lightning: true },
   birthday: { lights: [...EVENING, 'fire'], weather: 'snow', embers: true, confetti: true },
   july4: { lights: [...EVENING, 'fire'], weather: 'fireworks', embers: true, curtain: true, curtainStop: 415 }, // stops above Uncle Sam's hat
-  christmas: { lights: [...EVENING, 'fire'], weather: 'snow', embers: true, tree: true, santa: true },
+  christmas: { lights: [...EVENING, 'fire'], weather: 'snow', embers: true, tree: true, santa: true }, // elf walk-by: add elf: true once elf-0.png / elf-1.png frames are supplied
   stpatricks: { lights: ['lamp'], weather: 'petals', gold: true, tint: 'spring', leprechaun: true, books: true },
   thanksgiving: { lights: [...EVENING, 'fire'], weather: 'leaves', embers: true, turkey: true, pilgrim: true },
   easter: { lights: ['lamp'], weather: 'petals', tint: 'spring' },

@@ -579,7 +579,7 @@ function drawPage(t) {
 // Three seconds later it strikes again and he is back outside by the lamppost.
 const clownInside = { ...sprites['clown-inside'], img: sprite(sprites['clown-inside'].src) };
 const clownStreet = { ...sprites['clown-street'], img: sprite(sprites['clown-street'].src) };
-const STORM = { first: 10, every: 30, stay: 3 };
+const STORM = { first: 4, every: 30, stay: 3 };
 const STRIKE = 0.7; // seconds a strike's flash and bolt last
 let bolt = null;
 
@@ -683,6 +683,28 @@ function drawYear(t) {
   });
 }
 
+// Christmas: an elf strolls past on the sidewalk outside, head and shoulders showing above the
+// window bottom. First at 4s, then every 30s (the same rhythm as the Halloween lightning).
+const elfFrames = sprites.elf.map((f) => ({ ...f, img: sprite(f.src) }));
+const ELF = { first: 4, every: 30, walk: 6, from: 730, to: 1090, bottom: 578 };
+function drawElf(t, img) {
+  const k = t < ELF.first ? -1 : (t - ELF.first) % ELF.every;
+  if (k < 0 || k > ELF.walk) return;
+  const step = Math.floor(k / 0.3) % 2; // two-frame walk
+  const f = elfFrames[step];
+  if (!ready(f.img)) return;
+  const x = ELF.from + (ELF.to - ELF.from) * (k / ELF.walk);
+  const y = ELF.bottom - f.h - (step ? 2 : 0);
+  actx.save();
+  actx.beginPath();
+  for (const [x1, y1, x2, y2] of PANES) actx.rect(x1 * scale, y1 * scale, (x2 - x1) * scale, (y2 - y1) * scale);
+  actx.clip();
+  blit(f.img, x - f.w / 2, y, f.w, f.h);
+  actx.restore();
+  // Santa's raised milk glass is inside, in front of the window: put it back over the elf
+  drawPatch(img, [1012, 522, 1075, 582], 0, 0);
+}
+
 function updateAnim(t, now) {
   actx.clearRect(0, 0, animCanvas.width, animCanvas.height);
   const img = layers[scene];
@@ -693,6 +715,7 @@ function updateAnim(t, now) {
   if (profile.weather === 'fireworks') drawFireworks(t);
   if (profile.leprechaun) drawSwing(t);
   if (profile.books) drawToss(t);
+  if (profile.elf) drawElf(t, img);
   if (profile.santa) drawSanta(t);
   if (profile.turkey) drawTurkey(now);
   if (profile.pilgrim) drawPage(t);
