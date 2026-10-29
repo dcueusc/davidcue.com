@@ -127,7 +127,8 @@ export const CURTAIN = [
 // them (window boxes, a guest in the armchair) that are drawn back over them.
 export const WALKERS = {
   christmas: { names: ['washington-winter'], bottom: 578, front: [[1012, 522, 1075, 582]] }, // Santa's milk glass is in front
-  july4: { names: ['washington', 'franklin'], bottom: 530, front: [[760, 500, 1075, 585], [1045, 428, 1075, 585]] },
+  // in front of the flower boxes; only the window-seat pillows, the frame and Uncle Sam cover them
+  july4: { names: ['washington', 'franklin'], bottom: 600, front: [[700, 525, 835, 600], [995, 535, 1062, 600], [1045, 428, 1110, 600]] },
 };
 
 // New Year's Eve: the coming year hangs under the HAPPY NEW YEAR banner (center x, top y).
