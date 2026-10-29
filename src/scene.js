@@ -126,7 +126,7 @@ export const CURTAIN = [
 // taking turns. `bottom` is where their shoulders end; `front` are bits of the scene in front of
 // them (window boxes, a guest in the armchair) that are drawn back over them.
 export const WALKERS = {
-  christmas: { names: ['washington-winter'], bottom: 578, front: [[1012, 522, 1075, 582]] }, // Santa's milk glass is in front
+  christmas: { names: ['christmas-elf'], bottom: 578, front: [[1012, 522, 1075, 582]] }, // Santa's milk glass is in front
   // in front of the flower boxes; only the window-seat pillows, the frame and Uncle Sam cover them
   july4: { names: ['washington', 'franklin'], bottom: 600, front: [[700, 525, 835, 600], [995, 535, 1062, 600], [1045, 428, 1110, 600]] },
 };
