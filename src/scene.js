@@ -127,7 +127,7 @@ export const CURTAIN = [
 // them (window boxes, a guest in the armchair) that are drawn back over them.
 export const WALKERS = {
   christmas: {
-    names: ['christmas-elf', 'jack-santa'], bottom: 600, front: [],
+    names: ['jack-santa', 'christmas-elf'], bottom: 600, front: [],
     // Follow the actual pillow/glass outlines: rectangular masks hid empty glass beside them.
     frontPolygons: [
       [[704, 535], [711, 532], [725, 537], [738, 538], [752, 534], [756, 536],
