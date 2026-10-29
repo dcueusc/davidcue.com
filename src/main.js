@@ -697,18 +697,27 @@ function drawWalkers(t, img) {
   const name = cfg.names[Math.floor(since / WALK.every) % cfg.names.length];
   const step = Math.floor(k / 0.3) % 2; // two-frame walk
   // Washington's generated poses change his head's size and position. Keep his likeness stable
-  // and use a gentle continuous walking bob instead of snapping between those mismatched poses.
+  // and add a rhythmic step bounce and shoulder sway instead of swapping mismatched poses.
   const steady = name === 'washington';
   const f = walkerFrames[name][steady ? 0 : step];
   if (!ready(f.img)) return;
   const x = WALK.from + (WALK.to - WALK.from) * (k / WALK.walk);
-  const bob = steady ? 0.65 * Math.sin(k * Math.PI / 0.3) : (step ? 2 : 0);
+  const stride = k * Math.PI / 0.3;
+  const bob = steady ? 2.4 * Math.abs(Math.sin(stride)) : (step ? 2 : 0);
   const y = cfg.bottom - f.h - bob;
   actx.save();
   actx.beginPath();
   for (const [x1, y1, x2, y2] of PANES) actx.rect(x1 * scale, y1 * scale, (x2 - x1) * scale, (y2 - y1) * scale);
   actx.clip();
-  blit(f.img, x - f.w / 2, y, f.w, f.h);
+  if (steady) {
+    actx.save();
+    actx.translate((x + 0.8 * Math.sin(stride)) * scale, (y + f.h) * scale);
+    actx.rotate(0.018 * Math.sin(stride));
+    blit(f.img, -f.w / 2, -f.h, f.w, f.h);
+    actx.restore();
+  } else {
+    blit(f.img, x - f.w / 2, y, f.w, f.h);
+  }
   for (const r of cfg.front) drawPatch(img, r, 0, 0);
   actx.restore();
 }
