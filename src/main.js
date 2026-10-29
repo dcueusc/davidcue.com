@@ -719,6 +719,15 @@ function drawWalkers(t, img) {
     blit(f.img, x - f.w / 2, y, f.w, f.h);
   }
   for (const r of cfg.front) drawPatch(img, r, 0, 0);
+  for (const polygon of cfg.frontPolygons ?? []) {
+    actx.save();
+    actx.beginPath();
+    polygon.forEach(([px, py], i) => i ? actx.lineTo(px * scale, py * scale) : actx.moveTo(px * scale, py * scale));
+    actx.closePath();
+    actx.clip();
+    actx.drawImage(img, 0, 0, W * scale, H * scale);
+    actx.restore();
+  }
   actx.restore();
 }
 

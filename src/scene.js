@@ -126,7 +126,20 @@ export const CURTAIN = [
 // taking turns. `bottom` is where their shoulders end; `front` are bits of the scene in front of
 // them (window boxes, a guest in the armchair) that are drawn back over them.
 export const WALKERS = {
-  christmas: { names: ['christmas-elf'], bottom: 600, front: [[700, 525, 838, 610], [992, 535, 1075, 610], [1012, 522, 1075, 582]] }, // window-seat pillows and Santa's milk glass are in front
+  christmas: {
+    names: ['christmas-elf'], bottom: 600, front: [],
+    // Follow the actual pillow/glass outlines: rectangular masks hid empty glass beside them.
+    frontPolygons: [
+      [[704, 535], [711, 532], [725, 537], [738, 538], [752, 534], [756, 536],
+       [774, 535], [789, 538], [810, 533], [815, 550], [820, 558], [820, 565],
+       [824, 568], [824, 579], [829, 592], [829, 596], [809, 599], [798, 598],
+       [778, 603], [767, 601], [758, 602], [742, 605], [737, 605], [733, 610],
+       [727, 609], [721, 601], [715, 588], [712, 569], [706, 548]],
+      [[1000, 599], [1004, 587], [1007, 569], [1011, 551], [1015, 537],
+       [1027, 537], [1029, 541], [1031, 541], [1039, 539], [1043, 540],
+       [1043, 526], [1068, 526], [1068, 545], [1075, 542], [1075, 610], [1000, 610]],
+    ],
+  },
   // in front of the flower boxes; only the window-seat pillows, the frame and Uncle Sam cover them
   july4: { names: ['washington', 'franklin'], bottom: 600, front: [[700, 525, 835, 600], [995, 535, 1062, 600], [1045, 428, 1110, 600]] },
 };
