@@ -1,7 +1,7 @@
 import { content, VISITED, HEROES } from './content.js';
 import { drawWorldMap } from './worldmap.js';
 import {
-  W, H, SCENES, BIRTHDAY, BIRTH_YEAR, PROFILES, PANES, FIREPLACE, LIGHTS, HOTSPOTS, TYPERS, CURTAIN, GOLD, BOOK, YEAR_SIGN,
+  W, H, SCENES, BIRTHDAY, BIRTH_YEAR, PROFILES, PANES, FIREPLACE, LIGHTS, HOTSPOTS, TYPERS, CURTAIN, GOLD, BOOK, YEAR_SIGN, WALKERS,
 } from './scene.js';
 import sprites from './sprites.json';
 import stp from './stpatricks.json';
@@ -683,26 +683,30 @@ function drawYear(t) {
   });
 }
 
-// Christmas: an elf strolls past on the sidewalk outside, head and shoulders showing above the
-// window bottom. First at 4s, then every 30s (the same rhythm as the Halloween lightning).
-const elfFrames = sprites.elf.map((f) => ({ ...f, img: sprite(f.src) }));
-const ELF = { first: 4, every: 30, walk: 6, from: 730, to: 1090, bottom: 578 };
-function drawElf(t, img) {
-  const k = t < ELF.first ? -1 : (t - ELF.first) % ELF.every;
-  if (k < 0 || k > ELF.walk) return;
+// Passers-by on the sidewalk outside: first at 4s, then every 30s (the same rhythm as the Halloween
+// lightning), taking turns when a scene has more than one.
+const walkerFrames = Object.fromEntries(
+  Object.values(WALKERS).flatMap((w) => w.names).map((n) => [n, sprites[n].map((f) => ({ ...f, img: sprite(f.src) }))]),
+);
+const WALK = { first: 4, every: 30, walk: 6, from: 730, to: 1090 };
+function drawWalkers(t, img) {
+  const cfg = WALKERS[profile.walkers];
+  const since = t - WALK.first;
+  const k = since < 0 ? -1 : since % WALK.every;
+  if (k < 0 || k > WALK.walk) return;
+  const name = cfg.names[Math.floor(since / WALK.every) % cfg.names.length];
   const step = Math.floor(k / 0.3) % 2; // two-frame walk
-  const f = elfFrames[step];
+  const f = walkerFrames[name][step];
   if (!ready(f.img)) return;
-  const x = ELF.from + (ELF.to - ELF.from) * (k / ELF.walk);
-  const y = ELF.bottom - f.h - (step ? 2 : 0);
+  const x = WALK.from + (WALK.to - WALK.from) * (k / WALK.walk);
+  const y = cfg.bottom - f.h - (step ? 2 : 0);
   actx.save();
   actx.beginPath();
   for (const [x1, y1, x2, y2] of PANES) actx.rect(x1 * scale, y1 * scale, (x2 - x1) * scale, (y2 - y1) * scale);
   actx.clip();
   blit(f.img, x - f.w / 2, y, f.w, f.h);
+  for (const r of cfg.front) drawPatch(img, r, 0, 0);
   actx.restore();
-  // Santa's raised milk glass is inside, in front of the window: put it back over the elf
-  drawPatch(img, [1012, 522, 1075, 582], 0, 0);
 }
 
 function updateAnim(t, now) {
@@ -710,12 +714,12 @@ function updateAnim(t, now) {
   const img = layers[scene];
   if (!img.complete || !img.naturalWidth) return;
   drawTyping(img, now);
+  if (profile.walkers) drawWalkers(t, img); // before the curtain, which hangs in front of them
   if (profile.curtain) drawCurtain(img, t);
   if (profile.tree) drawTreeLights(t);
   if (profile.weather === 'fireworks') drawFireworks(t);
   if (profile.leprechaun) drawSwing(t);
   if (profile.books) drawToss(t);
-  if (profile.elf) drawElf(t, img);
   if (profile.santa) drawSanta(t);
   if (profile.turkey) drawTurkey(now);
   if (profile.pilgrim) drawPage(t);

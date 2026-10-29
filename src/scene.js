@@ -36,8 +36,8 @@ export const PROFILES = {
   summer: { lights: ['lamp'], weather: 'fireflies', motes: true, curtain: true, tint: 'summer' },
   halloween: { lights: ['lamp', 'streetHalloween', 'fire', 'lantern', 'screen'], weather: 'darkLeaves', embers: true, lightning: true },
   birthday: { lights: [...EVENING, 'fire'], weather: 'snow', embers: true, confetti: true },
-  july4: { lights: [...EVENING, 'fire'], weather: 'fireworks', embers: true, curtain: true, curtainStop: 415 }, // stops above Uncle Sam's hat
-  christmas: { lights: [...EVENING, 'fire'], weather: 'snow', embers: true, tree: true, santa: true, elf: true },
+  july4: { lights: [...EVENING, 'fire'], weather: 'fireworks', embers: true, curtain: true, curtainStop: 415, walkers: 'july4' }, // stops above Uncle Sam's hat
+  christmas: { lights: [...EVENING, 'fire'], weather: 'snow', embers: true, tree: true, santa: true },
   stpatricks: { lights: ['lamp'], weather: 'petals', gold: true, tint: 'spring', leprechaun: true, books: true },
   thanksgiving: { lights: [...EVENING, 'fire'], weather: 'leaves', embers: true, turkey: true, pilgrim: true },
   easter: { lights: ['lamp'], weather: 'petals', tint: 'spring' },
@@ -121,6 +121,13 @@ export const CURTAIN = [
   [1034, 76], [1100, 76], [1116, 200], [1150, 320], [1172, 400], [1196, 500], [1204, 568],
   [1140, 568], [1086, 420], [1046, 250],
 ];
+
+// Passers-by on the sidewalk outside the window: head and shoulders, first at 4s, then every 30s,
+// taking turns. `bottom` is where their shoulders end; `front` are bits of the scene in front of
+// them (window boxes, a guest in the armchair) that are drawn back over them.
+export const WALKERS = {
+  july4: { names: ['washington', 'franklin'], bottom: 530, front: [[760, 500, 1075, 585], [1045, 428, 1075, 585]] },
+};
 
 // New Year's Eve: the coming year hangs under the HAPPY NEW YEAR banner (center x, top y).
 export const YEAR_SIGN = { x: 962, y: 290 };
