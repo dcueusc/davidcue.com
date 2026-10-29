@@ -31,6 +31,7 @@ function sceneForDate(now = new Date()) {
   const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate();
   if (BIRTHDAY && m === BIRTHDAY[0] && day === BIRTHDAY[1]) return 'birthday';
+  if (m === 4 && day === 20) return 'fourtwenty';
   if (m === 12) return 'christmas';
   if (m === 10) return 'halloween';
   if (m === 11) return 'thanksgiving';
@@ -83,7 +84,7 @@ const layers = Object.fromEntries(
   }),
 );
 const load = (id) => { if (!layers[id].src) layers[id].src = layers[id].dataset.src; };
-addEventListener('load', () => setTimeout(() => IDS.forEach(load), 1500));
+addEventListener('load', () => setTimeout(() => SCENES.filter((s) => !s.hidden).forEach((s) => load(s.id)), 1500));
 
 // ---------- scene menu ----------
 
@@ -92,13 +93,13 @@ const pickerButton = $('picker-button');
 const pickerMenu = $('picker-menu');
 
 const menuItems = {};
-for (const group of [...new Set(SCENES.map((s) => s.group))]) {
+for (const group of [...new Set(SCENES.filter((s) => !s.hidden).map((s) => s.group))]) {
   const heading = document.createElement('li');
   heading.className = 'picker-group';
   heading.textContent = group;
   heading.setAttribute('role', 'presentation');
   pickerMenu.append(heading);
-  for (const s of SCENES.filter((x) => x.group === group)) {
+  for (const s of SCENES.filter((x) => x.group === group && !x.hidden)) {
     const li = document.createElement('li');
     const b = document.createElement('button');
     b.setAttribute('role', 'menuitemradio');
@@ -140,7 +141,7 @@ function setScene(id) {
   for (const k of IDS) {
     layers[k].classList.toggle('on', k === id);
     layers[k].alt = k === id ? `David's office in Beacon Hill: ${meta.label}` : '';
-    menuItems[k].setAttribute('aria-checked', k === id);
+    menuItems[k]?.setAttribute('aria-checked', k === id);
   }
   $('picker-label').textContent = meta.label;
   $('picker-icon').textContent = meta.icon;
@@ -770,7 +771,7 @@ for (const h of HOTSPOTS) {
   Object.assign(b.style, { left: pct(x1, W), top: pct(y1, H), width: pct(x2 - x1, W), height: pct(y2 - y1, H) });
   b.addEventListener('click', () => {
     if (h.id === 'me') $('about').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' });
-    else if (h.id === 'window') setScene(WINDOW_ORDER[(WINDOW_ORDER.indexOf(scene) + 1) % WINDOW_ORDER.length]);
+    else if (h.id === 'window') setScene(scene === 'fourtwenty' ? 'spring' : WINDOW_ORDER[(WINDOW_ORDER.indexOf(scene) + 1) % WINDOW_ORDER.length]);
     else openPopup(h.id);
   });
   $('hotspots').append(b);

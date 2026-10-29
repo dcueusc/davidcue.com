@@ -16,6 +16,8 @@ export const SCENES = [
   { id: 'halloween', label: 'Halloween', icon: '🎃', group: 'Holidays' },
   { id: 'thanksgiving', label: 'Thanksgiving', icon: '🦃', group: 'Holidays' },
   { id: 'christmas', label: 'Christmas', icon: '🎅', group: 'Holidays' },
+  // hidden: not in the menu or the window's cycle; only shows on April 20
+  { id: 'fourtwenty', label: '4/20', icon: '🌿', group: 'Holidays', hidden: true },
 ];
 
 // Your birthday as [month (1-12), day]. The birthday scene shows that day.
@@ -37,6 +39,7 @@ export const PROFILES = {
   stpatricks: { lights: ['lamp'], weather: 'petals', gold: true, tint: 'spring', leprechaun: true, books: true },
   thanksgiving: { lights: [...EVENING, 'fire'], weather: 'leaves', embers: true, turkey: true, pilgrim: true },
   easter: { lights: ['lamp'], weather: 'petals', tint: 'spring' },
+  fourtwenty: { lights: EVENING, weather: 'petals' },
 };
 
 // Glass panes of the big window (mullions excluded), used to clip weather particles.
@@ -97,6 +100,7 @@ const DAVID_HANDS = {
   stpatricks: [[356, 566, 400, 600], [400, 566, 438, 600]],
   thanksgiving: [[358, 568, 400, 600], [400, 568, 430, 600]],
   easter: [[355, 572, 398, 605], [398, 572, 440, 605]],
+  fourtwenty: [[356, 568, 400, 599], [400, 568, 440, 599]],
 };
 export const TYPERS = Object.fromEntries(SCENES.map(({ id }) => [id, [{ hands: DAVID_HANDS[id] }]]));
 TYPERS.halloween.push({ hands: [[1076, 626, 1102, 660], [1102, 620, 1137, 654]] });
