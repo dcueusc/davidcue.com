@@ -39,7 +39,7 @@ export const PROFILES = {
   stpatricks: { lights: ['lamp'], weather: 'petals', gold: true, tint: 'spring', leprechaun: true, books: true },
   thanksgiving: { lights: [...EVENING, 'fire'], weather: 'leaves', embers: true, turkey: true, pilgrim: true },
   easter: { lights: ['lamp'], weather: 'petals', tint: 'spring' },
-  fourtwenty: { lights: EVENING, weather: 'petals' },
+  fourtwenty: { lights: [...EVENING, 'ember'], weather: 'petals' },
 };
 
 // Glass panes of the big window (mullions excluded), used to clip weather particles.
@@ -85,6 +85,8 @@ export const LIGHTS = [
   { x: 1442, y: 398, r: 24, kind: 'lantern', group: 'lantern' },
   { x: 1505, y: 393, r: 24, kind: 'lantern', group: 'lantern' },
   { x: 1045, y: 615, r: 80, kind: 'screen', group: 'screen' },
+  // 4/20: the ember on the tip of David's joint
+  { x: 364, y: 486, r: 9, kind: 'lantern', group: 'ember' },
 ];
 
 // Hands that type: each rect is nudged down a pixel or two on a keystroke.
