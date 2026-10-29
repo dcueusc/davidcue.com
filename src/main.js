@@ -646,46 +646,40 @@ function drawLightning(t) {
   }
 }
 
-// New Year's Eve: the coming year as gold letter tiles strung under the banner, so it never goes stale.
-// It's always the next New Year, so the current year plus one.
-const YEAR_FONT = {
-  0: ['111', '101', '101', '101', '111'], 1: ['010', '110', '010', '010', '111'],
-  2: ['111', '001', '111', '100', '111'], 3: ['111', '001', '111', '001', '111'],
-  4: ['101', '101', '111', '001', '001'], 5: ['111', '100', '111', '001', '111'],
-  6: ['111', '100', '111', '101', '111'], 7: ['111', '001', '010', '010', '010'],
-  8: ['111', '101', '111', '101', '111'], 9: ['111', '101', '111', '001', '111'],
-};
+// New Year's Eve: the banner is drawn back over the fireworks (they're outside, behind it), and the
+// coming year hangs under it as gold digit cards matching the banner's letters. It's always the next
+// New Year, so the current year plus one.
+const nyeBanner = { ...sprites['nye-banner'], img: sprite(sprites['nye-banner'].src) };
+const digitCards = sprites.digits.map((d) => ({ ...d, img: sprite(d.src) }));
+
 function drawYear(t) {
-  const now = new Date();
-  const year = String(now.getFullYear() + 1);
-  const P = 4; // frame pixels per font pixel
-  const tile = { w: 3 * P + 10, h: 5 * P + 12 };
-  const gap = 6;
-  const total = year.length * tile.w + (year.length - 1) * gap;
+  if (ready(nyeBanner.img)) {
+    const [x1, y1, x2, y2] = nyeBanner.rect;
+    blit(nyeBanner.img, x1, y1, x2 - x1, y2 - y1);
+  }
+  const cards = [...String(new Date().getFullYear() + 1)].map((d) => digitCards[d]);
+  if (!cards.every((c) => ready(c.img))) return;
+  const gap = 5;
+  const total = cards.reduce((w, c) => w + c.w, 0) + gap * (cards.length - 1);
   const x0 = YEAR_SIGN.x - total / 2, y0 = YEAR_SIGN.y;
-  const r = (x, y, w, h, c) => { actx.fillStyle = c; actx.fillRect(Math.round(x * scale), Math.round(y * scale), Math.ceil(w * scale), Math.ceil(h * scale)); };
-  // the string, sagging a little in the middle
-  actx.strokeStyle = 'rgba(205, 170, 90, 0.9)';
+  // the string they hang from, sagging a little in the middle
+  actx.strokeStyle = 'rgba(150, 120, 70, 0.9)';
   actx.lineWidth = Math.max(1, 1.5 * scale);
   actx.beginPath();
-  actx.moveTo((x0 - 14) * scale, (y0 - 2) * scale);
-  actx.quadraticCurveTo(YEAR_SIGN.x * scale, (y0 + 8) * scale, (x0 + total + 14) * scale, (y0 - 2) * scale);
+  actx.moveTo((x0 - 16) * scale, (y0 - 2) * scale);
+  actx.quadraticCurveTo(YEAR_SIGN.x * scale, (y0 + 10) * scale, (x0 + total + 16) * scale, (y0 - 2) * scale);
   actx.stroke();
-  [...year].forEach((d, i) => {
-    const x = x0 + i * (tile.w + gap);
-    const sag = Math.sin(((x + tile.w / 2 - x0) / total) * Math.PI) * 5;
-    const sway = Math.sin(t * 1.3 + i) * 0.8;
-    const y = y0 + sag + sway;
-    r(x - 1, y - 1, tile.w + 2, tile.h + 2, '#2a1a0c');     // dark outline
-    r(x, y, tile.w, tile.h, '#c89434');                        // gold tile
-    r(x, y, tile.w, 2, '#f2cf72');                             // top highlight
-    r(x, y + tile.h - 2, tile.w, 2, '#8c6020');                // bottom shade
-    YEAR_FONT[d].forEach((row, j) => [...row].forEach((bit, k) => {
-      if (bit === '1') r(x + 5 + k * P, y + 6 + j * P, P, P, '#fff3c8');
-    }));
-    // a glint that runs across each tile now and then
-    const g = (t * 0.7 + i * 0.25) % 3;
-    if (g < 0.3) r(x + (g / 0.3) * (tile.w - 3), y + 2, 3, tile.h - 4, 'rgba(255, 250, 220, 0.55)');
+  let x = x0;
+  cards.forEach((c, i) => {
+    const mid = x + c.w / 2;
+    const sag = Math.sin(((mid - x0) / total) * Math.PI) * 5;
+    const tilt = (i % 2 ? 1 : -1) * 0.05 + Math.sin(t * 1.2 + i * 1.7) * 0.025; // gentle sway, like the banner
+    actx.save();
+    actx.translate(mid * scale, (y0 + sag) * scale);
+    actx.rotate(tilt);
+    actx.drawImage(c.img, (-c.w / 2) * scale, 0, c.w * scale, c.h * scale);
+    actx.restore();
+    x += c.w + gap;
   });
 }
 
