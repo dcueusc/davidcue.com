@@ -37,7 +37,7 @@ export const PROFILES = {
   halloween: { lights: ['lamp', 'streetHalloween', 'fire', 'lantern', 'screen'], weather: 'darkLeaves', embers: true, lightning: true },
   birthday: { lights: [...EVENING, 'fire'], weather: 'snow', embers: true, confetti: true },
   july4: { lights: [...EVENING, 'fire'], weather: 'fireworks', embers: true, curtain: true, curtainStop: 415, walkers: 'july4' }, // stops above Uncle Sam's hat
-  christmas: { lights: [...EVENING, 'fire'], weather: 'snow', embers: true, tree: true, santa: true },
+  christmas: { lights: [...EVENING, 'fire'], weather: 'snow', embers: true, tree: true, santa: true, walkers: 'christmas' },
   stpatricks: { lights: ['lamp'], weather: 'petals', gold: true, tint: 'spring', leprechaun: true, books: true },
   thanksgiving: { lights: [...EVENING, 'fire'], weather: 'leaves', embers: true, turkey: true, pilgrim: true },
   easter: { lights: ['lamp'], weather: 'petals', tint: 'spring' },
@@ -126,6 +126,7 @@ export const CURTAIN = [
 // taking turns. `bottom` is where their shoulders end; `front` are bits of the scene in front of
 // them (window boxes, a guest in the armchair) that are drawn back over them.
 export const WALKERS = {
+  christmas: { names: ['washington-winter'], bottom: 578, front: [[1012, 522, 1075, 582]] }, // Santa's milk glass is in front
   july4: { names: ['washington', 'franklin'], bottom: 530, front: [[760, 500, 1075, 585], [1045, 428, 1075, 585]] },
 };
 
