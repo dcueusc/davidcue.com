@@ -10,12 +10,14 @@ export const SCENES = [
   { id: 'summer', label: 'Summer', icon: '☀️', group: 'Seasons' },
   { id: 'fall', label: 'Fall', icon: '🍂', group: 'Seasons' },
   { id: 'birthday', label: 'Birthday', icon: '🎂', group: 'Holidays' },
+  { id: 'valentines', label: "Valentine's Day", icon: '💘', group: 'Holidays' },
   { id: 'stpatricks', label: "St. Patrick's Day", icon: '☘️', group: 'Holidays' },
   { id: 'easter', label: 'Easter', icon: '🐣', group: 'Holidays' },
   { id: 'july4', label: 'Fourth of July', icon: '🎆', group: 'Holidays' },
   { id: 'halloween', label: 'Halloween', icon: '🎃', group: 'Holidays' },
   { id: 'thanksgiving', label: 'Thanksgiving', icon: '🦃', group: 'Holidays' },
   { id: 'christmas', label: 'Christmas', icon: '🎅', group: 'Holidays' },
+  { id: 'nye', label: "New Year's Eve", icon: '🥂', group: 'Holidays' },
   // hidden: not in the menu or the window's cycle; only shows on April 20
   { id: 'fourtwenty', label: '4/20', icon: '🌿', group: 'Holidays', hidden: true },
 ];
@@ -40,6 +42,8 @@ export const PROFILES = {
   thanksgiving: { lights: [...EVENING, 'fire'], weather: 'leaves', embers: true, turkey: true, pilgrim: true },
   easter: { lights: ['lamp'], weather: 'petals', tint: 'spring' },
   fourtwenty: { lights: [...EVENING, 'ember'], weather: 'petals' },
+  nye: { lights: [...EVENING, 'fire'], weather: 'fireworks', embers: true, confetti: true, year: true },
+  valentines: { lights: [...EVENING, 'fire'], weather: 'snow', embers: true },
 };
 
 // Glass panes of the big window (mullions excluded), used to clip weather particles.
@@ -103,6 +107,8 @@ const DAVID_HANDS = {
   thanksgiving: [[358, 568, 400, 600], [400, 568, 430, 600]],
   easter: [[355, 572, 398, 605], [398, 572, 440, 605]],
   fourtwenty: [[356, 568, 400, 599], [400, 568, 440, 599]],
+  nye: [[387, 566, 410, 598], [410, 566, 440, 598]], // left of 387 is the champagne glass
+  valentines: [[360, 566, 400, 600], [400, 566, 440, 600]],
 };
 export const TYPERS = Object.fromEntries(SCENES.map(({ id }) => [id, [{ hands: DAVID_HANDS[id] }]]));
 TYPERS.halloween.push({ hands: [[1076, 626, 1102, 660], [1102, 620, 1137, 654]] });
@@ -115,6 +121,9 @@ export const CURTAIN = [
   [1034, 76], [1100, 76], [1116, 200], [1150, 320], [1172, 400], [1196, 500], [1204, 568],
   [1140, 568], [1086, 420], [1046, 250],
 ];
+
+// New Year's Eve: the coming year hangs under the HAPPY NEW YEAR banner (center x, top y).
+export const YEAR_SIGN = { x: 962, y: 302 };
 
 // Thanksgiving: the pilgrim's open book. A page flips from the right edge over the spine to the left.
 export const BOOK = { spine: [1075, 607], right: [1099, 604], left: [1052, 600] };

@@ -1,7 +1,7 @@
 import { content, VISITED, HEROES } from './content.js';
 import { drawWorldMap } from './worldmap.js';
 import {
-  W, H, SCENES, BIRTHDAY, BIRTH_YEAR, PROFILES, PANES, FIREPLACE, LIGHTS, HOTSPOTS, TYPERS, CURTAIN, GOLD, BOOK,
+  W, H, SCENES, BIRTHDAY, BIRTH_YEAR, PROFILES, PANES, FIREPLACE, LIGHTS, HOTSPOTS, TYPERS, CURTAIN, GOLD, BOOK, YEAR_SIGN,
 } from './scene.js';
 import sprites from './sprites.json';
 import stp from './stpatricks.json';
@@ -32,6 +32,7 @@ function sceneForDate(now = new Date()) {
   const y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate();
   if (BIRTHDAY && m === BIRTHDAY[0] && day === BIRTHDAY[1]) return 'birthday';
   if (m === 4 && day === 20) return 'fourtwenty';
+  if (m === 12 && day === 31) return 'nye';
   if (m === 12) return 'christmas';
   if (m === 10) return 'halloween';
   if (m === 11) return 'thanksgiving';
@@ -39,6 +40,7 @@ function sceneForDate(now = new Date()) {
   // itself). Where two windows overlap, the holiday coming up soonest wins.
   const holidays = {
     easter: easterSunday(y),
+    valentines: new Date(y, 1, 14),
     stpatricks: new Date(y, 2, 17),
     july4: new Date(y, 6, 4),
   };
@@ -644,6 +646,49 @@ function drawLightning(t) {
   }
 }
 
+// New Year's Eve: the coming year as gold letter tiles strung under the banner, so it never goes stale.
+// It's always the next New Year, so the current year plus one.
+const YEAR_FONT = {
+  0: ['111', '101', '101', '101', '111'], 1: ['010', '110', '010', '010', '111'],
+  2: ['111', '001', '111', '100', '111'], 3: ['111', '001', '111', '001', '111'],
+  4: ['101', '101', '111', '001', '001'], 5: ['111', '100', '111', '001', '111'],
+  6: ['111', '100', '111', '101', '111'], 7: ['111', '001', '010', '010', '010'],
+  8: ['111', '101', '111', '101', '111'], 9: ['111', '101', '111', '001', '111'],
+};
+function drawYear(t) {
+  const now = new Date();
+  const year = String(now.getFullYear() + 1);
+  const P = 4; // frame pixels per font pixel
+  const tile = { w: 3 * P + 10, h: 5 * P + 12 };
+  const gap = 6;
+  const total = year.length * tile.w + (year.length - 1) * gap;
+  const x0 = YEAR_SIGN.x - total / 2, y0 = YEAR_SIGN.y;
+  const r = (x, y, w, h, c) => { actx.fillStyle = c; actx.fillRect(Math.round(x * scale), Math.round(y * scale), Math.ceil(w * scale), Math.ceil(h * scale)); };
+  // the string, sagging a little in the middle
+  actx.strokeStyle = 'rgba(205, 170, 90, 0.9)';
+  actx.lineWidth = Math.max(1, 1.5 * scale);
+  actx.beginPath();
+  actx.moveTo((x0 - 14) * scale, (y0 - 2) * scale);
+  actx.quadraticCurveTo(YEAR_SIGN.x * scale, (y0 + 8) * scale, (x0 + total + 14) * scale, (y0 - 2) * scale);
+  actx.stroke();
+  [...year].forEach((d, i) => {
+    const x = x0 + i * (tile.w + gap);
+    const sag = Math.sin(((x + tile.w / 2 - x0) / total) * Math.PI) * 5;
+    const sway = Math.sin(t * 1.3 + i) * 0.8;
+    const y = y0 + sag + sway;
+    r(x - 1, y - 1, tile.w + 2, tile.h + 2, '#2a1a0c');     // dark outline
+    r(x, y, tile.w, tile.h, '#c89434');                        // gold tile
+    r(x, y, tile.w, 2, '#f2cf72');                             // top highlight
+    r(x, y + tile.h - 2, tile.w, 2, '#8c6020');                // bottom shade
+    YEAR_FONT[d].forEach((row, j) => [...row].forEach((bit, k) => {
+      if (bit === '1') r(x + 5 + k * P, y + 6 + j * P, P, P, '#fff3c8');
+    }));
+    // a glint that runs across each tile now and then
+    const g = (t * 0.7 + i * 0.25) % 3;
+    if (g < 0.3) r(x + (g / 0.3) * (tile.w - 3), y + 2, 3, tile.h - 4, 'rgba(255, 250, 220, 0.55)');
+  });
+}
+
 function updateAnim(t, now) {
   actx.clearRect(0, 0, animCanvas.width, animCanvas.height);
   const img = layers[scene];
@@ -658,6 +703,7 @@ function updateAnim(t, now) {
   if (profile.turkey) drawTurkey(now);
   if (profile.pilgrim) drawPage(t);
   if (profile.lightning) drawLightning(t);
+  if (profile.year) drawYear(t);
 }
 
 // ---------- hotspots + popup ----------
@@ -759,7 +805,7 @@ popup.addEventListener('click', (e) => {
 });
 
 // The window steps through the scenes in calendar order, starting from whatever is showing.
-const WINDOW_ORDER = ['fall', 'halloween', 'thanksgiving', 'birthday', 'christmas', 'winter', 'stpatricks', 'easter', 'spring', 'july4', 'summer'];
+const WINDOW_ORDER = ['fall', 'halloween', 'thanksgiving', 'birthday', 'christmas', 'nye', 'winter', 'valentines', 'stpatricks', 'easter', 'spring', 'july4', 'summer'];
 
 const hotspotEls = [];
 for (const h of HOTSPOTS) {
