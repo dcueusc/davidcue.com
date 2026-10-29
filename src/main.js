@@ -134,7 +134,10 @@ picker.addEventListener('keydown', (e) => {
   }
 });
 
+let walkerStartedAt = 0;
+
 function setScene(id) {
+  walkerStartedAt = performance.now() / 1000;
   scene = id;
   profile = PROFILES[id];
   load(id);
@@ -691,7 +694,7 @@ const walkerFrames = Object.fromEntries(
 const WALK = { first: 4, every: 30, walk: 6, from: 730, to: 1090 };
 function drawWalkers(t, img) {
   const cfg = WALKERS[profile.walkers];
-  const since = t - WALK.first;
+  const since = t - walkerStartedAt - WALK.first;
   const k = since < 0 ? -1 : since % WALK.every;
   if (k < 0 || k > WALK.walk) return;
   const name = cfg.names[Math.floor(since / WALK.every) % cfg.names.length];
