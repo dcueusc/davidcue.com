@@ -46,6 +46,9 @@ export const content = {
       <li><em>Shoe Dog</em> by Phil Knight</li>
       <li><em>Steve Jobs</em> by Walter Isaacson</li>
       <li><em>Zero to One</em> by Peter Thiel</li>
+      <li><em>The Almanack of Naval Ravikant</em> by Eric Jorgenson</li>
+      <li><em>Hackers &amp; Painters</em> by Paul Graham</li>
+      <li><em>Poor Charlie's Almanack</em> by Charlie Munger</li>
       <li><em>11/22/63</em> by Stephen King</li>
       <li><em>Purple Cow</em> by Seth Godin</li>
     </ul>`,
