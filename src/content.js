@@ -16,6 +16,7 @@ export const HEROES = [
   { name: 'John F. Kennedy', img: '/img/heroes/jfk.webp', why: "“Ask not what your country can do for you—ask what you can do for your country.”" },
   { name: 'Steve Jobs', img: '/img/heroes/jobs.webp', why: "I go on a lot of long walks." },
   { name: 'Theodore Roosevelt', img: '/img/heroes/roosevelt.webp', why: "The strenuous life." },
+  { name: 'Benjamin Franklin', img: '/img/heroes/franklin.webp', why: "“If you would not be forgotten as soon as you are dead and rotten, either write things worth reading, or do things worth the writing.”" },
   { name: 'Alex Honnold', img: '/img/heroes/honnold.webp', why: "Fearless." },
   { name: 'Tom Brady', img: '/img/heroes/brady.webp', why: "Go Pats." },
 ];
