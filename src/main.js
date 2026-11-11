@@ -1,7 +1,7 @@
 import { content, VISITED, HEROES } from './content.js';
 import { drawWorldMap } from './worldmap.js';
 import {
-  W, H, SCENES, BIRTHDAY, BIRTH_YEAR, PROFILES, PANES, FIREPLACE, LIGHTS, HOTSPOTS, TYPERS, CURTAIN, GOLD, BOOK, YEAR_SIGN, WALKERS,
+  W, H, SCENES, BIRTHDAY, BIRTH_YEAR, PROFILES, PANES, FIREPLACE, LIGHTS, HOTSPOTS, TYPERS, CURTAIN, GOLD, BOOK, YEAR_SIGN, WALKERS, CARD_GAME,
 } from './scene.js';
 import sprites from './sprites.json';
 import stp from './stpatricks.json';
@@ -368,6 +368,7 @@ function drawPatch(img, [x1, y1, x2, y2], dx, dy) {
 
 function drawTyping(img, now) {
   for (const t of typers[scene]) {
+    if (!t.hands) continue; // nobody's on the laptop in this scene
     stepTyper(t, now);
     if (now < t.until) drawPatch(img, t.hands[t.hand], 0, 1.6);
   }
@@ -733,6 +734,75 @@ function drawKnit(t) {
   blit(momKnit.img, x1, y1, x2 - x1, y2 - y1);
 }
 
+// Mother's Day card game: every few seconds the next player lays a card face up on the pile, then
+// draws one from the deck. Cards are drawn as tiny pixel cards, so suits stay crisp and consistent.
+const CARD = { w: 13, h: 18 };
+const SUITS = [['♥', '#c0303a'], ['♦', '#c0303a'], ['♠', '#1e1c26'], ['♣', '#1e1c26']];
+const PIP = { // 5x5 suit shapes
+  '♥': ['01010', '11111', '11111', '01110', '00100'],
+  '♦': ['00100', '01110', '11111', '01110', '00100'],
+  '♠': ['00100', '01110', '11111', '11111', '00100'],
+  '♣': ['01110', '01110', '11111', '11111', '00100'],
+};
+const TURN = 3.2; // seconds per player's turn
+const cardRng = (n) => ((Math.sin(n * 91.7) * 43758.5453) % 1 + 1) % 1; // repeatable "random"
+
+function pxCard(cx, cy, faceUp, suitIdx, angle, alpha = 1) {
+  const { w, h } = CARD;
+  actx.save();
+  actx.globalAlpha = alpha;
+  actx.translate(cx * scale, cy * scale);
+  actx.rotate(angle);
+  const r = (x, y, ww, hh, c) => { actx.fillStyle = c; actx.fillRect((x - w / 2) * scale, (y - h / 2) * scale, ww * scale, hh * scale); };
+  r(0, 0, w, h, '#1b1622');                     // outline
+  if (faceUp) {
+    const [suit, color] = SUITS[suitIdx];
+    r(1, 1, w - 2, h - 2, '#efe6cf');           // card face
+    r(1, h - 2, w - 2, 1, '#cbbf9f');           // shaded bottom edge
+    PIP[suit].forEach((row, j) => [...row].forEach((b, i) => { if (b === '1') r(4 + i, 6 + j, 1, 1, color); }));
+    r(2, 2, 2, 1, color); r(2, 3, 1, 1, color); // corner index marks
+    r(w - 4, h - 3, 2, 1, color);
+  } else {
+    r(1, 1, w - 2, h - 2, '#2e4f9e');           // blue back
+    for (let y = 2; y < h - 2; y += 2) for (let x = 2 + (y % 4 ? 1 : 0); x < w - 2; x += 2) r(x, y, 1, 1, '#5c7cc8');
+  }
+  actx.restore();
+  actx.globalAlpha = 1;
+}
+
+// position along a little arc from a to b
+function arc(a, b, k, lift) {
+  const e = k * k * (3 - 2 * k);
+  return [a[0] + (b[0] - a[0]) * e, a[1] + (b[1] - a[1]) * e - Math.sin(Math.PI * e) * lift];
+}
+
+function drawCards(t) {
+  const turn = Math.floor(t / TURN);
+  const k = (t % TURN) / TURN;
+  const players = ['david', 'mom'];
+  const who = players[turn % 2];
+  // the pile shows the last few cards played (it's gathered up every 10 turns)
+  const pileFrom = turn - (turn % 10);
+  for (let n = Math.max(pileFrom, turn - 4); n < turn; n++) {
+    const [px, py] = CARD_GAME.pile;
+    pxCard(px + (cardRng(n) - 0.5) * 5, py + (cardRng(n + 7) - 0.5) * 3, true, Math.floor(cardRng(n + 3) * 4), (cardRng(n + 11) - 0.5) * 0.5);
+  }
+  const hand = CARD_GAME.hands[who];
+  if (k < 0.25) {
+    // lay a card: from the hand, face up, onto the pile
+    const [x, y] = arc(hand, CARD_GAME.pile, k / 0.25, 18);
+    pxCard(x, y, true, Math.floor(cardRng(turn + 3) * 4), (cardRng(turn + 11) - 0.5) * 0.5 * (k / 0.25));
+  } else {
+    const [px, py] = CARD_GAME.pile;
+    pxCard(px + (cardRng(turn) - 0.5) * 5, py + (cardRng(turn + 7) - 0.5) * 3, true, Math.floor(cardRng(turn + 3) * 4), (cardRng(turn + 11) - 0.5) * 0.5);
+  }
+  if (k > 0.4 && k < 0.65) {
+    // draw a card: off the top of the deck, face down, back into the hand
+    const [x, y] = arc(CARD_GAME.deck, hand, (k - 0.4) / 0.25, 14);
+    pxCard(x, y, false, 0, 0, 1);
+  }
+}
+
 function updateAnim(t, now) {
   actx.clearRect(0, 0, animCanvas.width, animCanvas.height);
   const img = layers[scene];
@@ -746,6 +816,7 @@ function updateAnim(t, now) {
   if (profile.books) drawToss(t);
   if (profile.santa) drawSanta(t);
   if (profile.knit) drawKnit(t);
+  if (profile.cards) drawCards(t);
   if (profile.turkey) drawTurkey(now);
   if (profile.pilgrim) drawPage(t);
   if (profile.lightning) drawLightning(t);
