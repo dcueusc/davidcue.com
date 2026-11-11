@@ -12,6 +12,10 @@ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const pct = (v, total) => `${(v / total) * 100}%`;
 const rand = (a, b) => a + Math.random() * (b - a);
 const IDS = SCENES.map((s) => s.id);
+// GoatCounter events: each shows up in the dashboard as its own path, counted like a page.
+const track = (name, title = name) => {
+  try { window.goatcounter?.count?.({ path: name, title, event: true }); } catch {}
+};
 // version-stamp image URLs so a new deploy's images aren't served from old browser caches
 const bust = (src) => `${src}?v=${__BUILD__}`;
 
@@ -107,7 +111,7 @@ for (const group of [...new Set(SCENES.filter((s) => !s.hidden).map((s) => s.gro
     const b = document.createElement('button');
     b.setAttribute('role', 'menuitemradio');
     b.innerHTML = `<span class="picker-icon" aria-hidden="true">${s.icon}</span>${s.label}`;
-    b.addEventListener('click', () => { setScene(s.id); closeMenu(); pickerButton.focus(); });
+    b.addEventListener('click', () => { track(`scene-${s.id}`, `Picked scene: ${s.label}`); setScene(s.id); closeMenu(); pickerButton.focus(); });
     li.append(b);
     pickerMenu.append(li);
     menuItems[s.id] = b;
@@ -797,6 +801,7 @@ function openPopup(id) {
     let i = c.start ?? 0;
     const show = (dir) => {
       i = (i + dir + c.photos.length) % c.photos.length;
+      if (dir) track(`photo-${i}`, `Photo viewed: ${c.photos[i].caption}`);
       $('photo-img').src = bust(c.photos[i].src);
       $('photo-img').alt = c.photos[i].caption;
       $('photo-caption').textContent = c.photos[i].caption;
@@ -827,6 +832,7 @@ function openPopup(id) {
     const show = (d) => {
       i = (i + d + HEROES.length) % HEROES.length;
       const h = HEROES[i];
+      if (d) track(`goat-${h.name.toLowerCase().replace(/[^a-z]+/g, '-')}`, `GOAT viewed: ${h.name}`);
       $('hero-img').src = bust(h.img);
       $('hero-img').alt = `Bust of ${h.name}`;
       $('hero-name').textContent = h.name;
@@ -863,6 +869,7 @@ for (const h of HOTSPOTS) {
   b.dataset.label = h.label;
   Object.assign(b.style, { left: pct(x1, W), top: pct(y1, H), width: pct(x2 - x1, W), height: pct(y2 - y1, H) });
   b.addEventListener('click', () => {
+    track(`click-${h.id}`, `Clicked: ${h.label}`);
     if (h.id === 'me') $('about').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' });
     else if (h.id === 'window') setScene(scene === 'fourtwenty' ? 'spring' : WINDOW_ORDER[(WINDOW_ORDER.indexOf(scene) + 1) % WINDOW_ORDER.length]);
     else openPopup(h.id);
