@@ -21,8 +21,6 @@ export const SCENES = [
   { id: 'nye', label: "New Year's Eve", icon: '🥂', group: 'Holidays' },
   // hidden: not in the menu or the window's cycle; only shows on April 20
   { id: 'fourtwenty', label: '4/20', icon: '🌿', group: 'Holidays', hidden: true },
-  // hidden demo: the Mother's Day card game, only reachable at ?scene=mothersday-cards
-  { id: 'mothersday-cards', label: "Mother's Day (cards)", icon: '🃏', group: 'Holidays', hidden: true },
 ];
 
 // Your birthday as [month (1-12), day]. The birthday scene shows that day.
@@ -48,7 +46,6 @@ export const PROFILES = {
   nye: { lights: [...EVENING, 'fire'], weather: 'fireworks', embers: true, confetti: true, year: true },
   valentines: { lights: [...EVENING, 'fire'], weather: 'snow', embers: true },
   mothersday: { lights: ['lamp'], weather: 'petals', tint: 'spring', knit: true },
-  'mothersday-cards': { lights: ['lamp'], weather: 'petals', tint: 'spring', cards: true },
 };
 
 // Glass panes of the big window (mullions excluded), used to clip weather particles.
@@ -127,15 +124,6 @@ export const CURTAIN = [
   [1034, 76], [1100, 76], [1116, 200], [1150, 320], [1172, 400], [1196, 500], [1204, 568],
   [1140, 568], [1086, 420], [1046, 250],
 ];
-
-// Mother's Day card game (frame pixels): each player's resting hand, where the card is in their
-// reaching pose, the face-down deck and the face-up pile.
-export const CARD_GAME = {
-  hands: { david: [390, 506], mom: [660, 590] },
-  reach: { david: [530, 566], mom: [550, 650] },
-  deck: [392, 604],
-  pile: [497, 600],
-};
 
 // Passers-by on the sidewalk outside the window: head and shoulders, first at 4s, then every 30s,
 // taking turns. `bottom` is where their shoulders end; `front` are bits of the scene in front of
