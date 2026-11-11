@@ -776,30 +776,41 @@ function arc(a, b, k, lift) {
   return [a[0] + (b[0] - a[0]) * e, a[1] + (b[1] - a[1]) * e - Math.sin(Math.PI * e) * lift];
 }
 
+const davidReach = { ...sprites['david-reach'], img: sprite(sprites['david-reach'].src) };
+const momReach = { ...sprites['mom-reach'], img: sprite(sprites['mom-reach'].src) };
+const momBehind = { ...sprites['mom-behind'], img: sprite(sprites['mom-behind'].src) };
+const drawSprite = (s) => { if (ready(s.img)) { const [x1, y1, x2, y2] = s.rect; blit(s.img, x1, y1, x2 - x1, y2 - y1); } };
+
+function pileCard(n) {
+  const [px, py] = CARD_GAME.pile;
+  pxCard(px + (cardRng(n) - 0.5) * 6, py + (cardRng(n + 7) - 0.5) * 3, true, Math.floor(cardRng(n + 3) * 4), (cardRng(n + 11) - 0.5) * 0.5);
+}
+
+// One turn: reach out with a card, lay it face up on the pile, sit back, then draw from the deck.
 function drawCards(t) {
   const turn = Math.floor(t / TURN);
   const k = (t % TURN) / TURN;
-  const players = ['david', 'mom'];
-  const who = players[turn % 2];
-  // the pile shows the last few cards played (it's gathered up every 10 turns)
-  const pileFrom = turn - (turn % 10);
-  for (let n = Math.max(pileFrom, turn - 4); n < turn; n++) {
-    const [px, py] = CARD_GAME.pile;
-    pxCard(px + (cardRng(n) - 0.5) * 5, py + (cardRng(n + 7) - 0.5) * 3, true, Math.floor(cardRng(n + 3) * 4), (cardRng(n + 11) - 0.5) * 0.5);
+  const who = turn % 2 ? 'mom' : 'david';
+  const [dx, dy] = CARD_GAME.deck;
+  for (let i = 3; i >= 0; i--) pxCard(dx - i * 0.6, dy - i * 1.2, false, 0, 0); // the deck, a few cards thick
+  const pileFrom = turn - (turn % 10); // the pile is gathered up every 10 turns
+  for (let n = Math.max(pileFrom, turn - 4); n < turn; n++) pileCard(n);
+  const reaching = k > 0.08 && k < 0.38;
+  if (reaching) {
+    if (who === 'david') drawSprite(davidReach);
+    else { drawSprite(momBehind); drawSprite(momReach); }
   }
-  const hand = CARD_GAME.hands[who];
-  if (k < 0.25) {
-    // lay a card: from the hand, face up, onto the pile
-    const [x, y] = arc(hand, CARD_GAME.pile, k / 0.25, 18);
-    pxCard(x, y, true, Math.floor(cardRng(turn + 3) * 4), (cardRng(turn + 11) - 0.5) * 0.5 * (k / 0.25));
-  } else {
-    const [px, py] = CARD_GAME.pile;
-    pxCard(px + (cardRng(turn) - 0.5) * 5, py + (cardRng(turn + 7) - 0.5) * 3, true, Math.floor(cardRng(turn + 3) * 4), (cardRng(turn + 11) - 0.5) * 0.5);
+  if (k > 0.28 && k < 0.38) {
+    // the card leaves her or his fingers and drops onto the pile
+    const [x, y] = arc(CARD_GAME.reach[who], CARD_GAME.pile, (k - 0.28) / 0.1, 6);
+    pxCard(x, y, true, Math.floor(cardRng(turn + 3) * 4), (cardRng(turn + 11) - 0.5) * 0.5);
+  } else if (k >= 0.38) {
+    pileCard(turn);
   }
-  if (k > 0.4 && k < 0.65) {
+  if (k > 0.5 && k < 0.72) {
     // draw a card: off the top of the deck, face down, back into the hand
-    const [x, y] = arc(CARD_GAME.deck, hand, (k - 0.4) / 0.25, 14);
-    pxCard(x, y, false, 0, 0, 1);
+    const [x, y] = arc([dx - 1.8, dy - 3.6], CARD_GAME.hands[who], (k - 0.5) / 0.22, 14);
+    pxCard(x, y, false, 0, 0);
   }
 }
 

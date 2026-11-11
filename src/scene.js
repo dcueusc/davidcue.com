@@ -128,11 +128,13 @@ export const CURTAIN = [
   [1140, 568], [1086, 420], [1046, 250],
 ];
 
-// Mother's Day card game (frame pixels): where each player's hand is, the deck and the discard pile.
+// Mother's Day card game (frame pixels): each player's resting hand, where the card is in their
+// reaching pose, the face-down deck and the face-up pile.
 export const CARD_GAME = {
-  hands: { david: [390, 506], mom: [688, 588] },
-  deck: [497, 598],
-  pile: [565, 600],
+  hands: { david: [390, 506], mom: [660, 590] },
+  reach: { david: [530, 566], mom: [550, 650] },
+  deck: [392, 604],
+  pile: [497, 600],
 };
 
 // Passers-by on the sidewalk outside the window: head and shoulders, first at 4s, then every 30s,
