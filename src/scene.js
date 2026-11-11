@@ -13,6 +13,7 @@ export const SCENES = [
   { id: 'valentines', label: "Valentine's Day", icon: '💘', group: 'Holidays' },
   { id: 'stpatricks', label: "St. Patrick's Day", icon: '☘️', group: 'Holidays' },
   { id: 'easter', label: 'Easter', icon: '🐣', group: 'Holidays' },
+  { id: 'mothersday', label: "Mother's Day", icon: '💐', group: 'Holidays' },
   { id: 'july4', label: 'Fourth of July', icon: '🎆', group: 'Holidays' },
   { id: 'halloween', label: 'Halloween', icon: '🎃', group: 'Holidays' },
   { id: 'thanksgiving', label: 'Thanksgiving', icon: '🦃', group: 'Holidays' },
@@ -44,6 +45,7 @@ export const PROFILES = {
   fourtwenty: { lights: [...EVENING, 'ember'], weather: 'petals' },
   nye: { lights: [...EVENING, 'fire'], weather: 'fireworks', embers: true, confetti: true, year: true },
   valentines: { lights: [...EVENING, 'fire'], weather: 'snow', embers: true },
+  mothersday: { lights: ['lamp'], weather: 'petals', tint: 'spring', knit: true },
 };
 
 // Glass panes of the big window (mullions excluded), used to clip weather particles.
@@ -109,6 +111,7 @@ const DAVID_HANDS = {
   fourtwenty: [[356, 568, 400, 599], [400, 568, 440, 599]],
   nye: [[387, 566, 410, 598], [410, 566, 440, 598]], // left of 387 is the champagne glass
   valentines: [[360, 566, 400, 600], [400, 566, 440, 600]],
+  mothersday: [[357, 568, 400, 600], [400, 568, 440, 600]],
 };
 export const TYPERS = Object.fromEntries(SCENES.map(({ id }) => [id, [{ hands: DAVID_HANDS[id] }]]));
 TYPERS.halloween.push({ hands: [[1076, 626, 1102, 660], [1102, 620, 1137, 654]] });

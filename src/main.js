@@ -41,6 +41,7 @@ function sceneForDate(now = new Date()) {
   const holidays = {
     easter: easterSunday(y),
     valentines: new Date(y, 1, 14),
+    mothersday: new Date(y, 4, 8 + ((7 - new Date(y, 4, 1).getDay()) % 7)), // second Sunday of May
     stpatricks: new Date(y, 2, 17),
     july4: new Date(y, 6, 4),
   };
@@ -722,6 +723,16 @@ function drawWalkers(t, img) {
   actx.restore();
 }
 
+// Mother's Day: Mom's hands and needles swap between two knitting poses, with a little pause now and then.
+const momKnit = { ...sprites['mom-knit'], img: sprite(sprites['mom-knit'].src) };
+function drawKnit(t) {
+  if (!ready(momKnit.img)) return;
+  const k = t % 7; // knit for 6s, rest for 1s
+  if (k > 6 || Math.floor(k / 0.45) % 2 === 0) return;
+  const [x1, y1, x2, y2] = momKnit.rect;
+  blit(momKnit.img, x1, y1, x2 - x1, y2 - y1);
+}
+
 function updateAnim(t, now) {
   actx.clearRect(0, 0, animCanvas.width, animCanvas.height);
   const img = layers[scene];
@@ -734,6 +745,7 @@ function updateAnim(t, now) {
   if (profile.leprechaun) drawSwing(t);
   if (profile.books) drawToss(t);
   if (profile.santa) drawSanta(t);
+  if (profile.knit) drawKnit(t);
   if (profile.turkey) drawTurkey(now);
   if (profile.pilgrim) drawPage(t);
   if (profile.lightning) drawLightning(t);
@@ -839,7 +851,7 @@ popup.addEventListener('click', (e) => {
 });
 
 // The window steps through the scenes in calendar order, starting from whatever is showing.
-const WINDOW_ORDER = ['fall', 'halloween', 'thanksgiving', 'birthday', 'christmas', 'nye', 'winter', 'valentines', 'stpatricks', 'easter', 'spring', 'july4', 'summer'];
+const WINDOW_ORDER = ['fall', 'halloween', 'thanksgiving', 'birthday', 'christmas', 'nye', 'winter', 'valentines', 'stpatricks', 'easter', 'mothersday', 'spring', 'july4', 'summer'];
 
 const hotspotEls = [];
 for (const h of HOTSPOTS) {
