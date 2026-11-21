@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShortForm-Bench</title>
+<meta name="description" content="ShortForm-Bench tests whether AI models can write short-form video scripts that 25 creators would actually film. 250 pitches, seven models, 1,750 creator-rated scripts.">
+<meta property="og:title" content="ShortForm-Bench">
+<meta property="og:description" content="ShortForm-Bench tests whether AI models can write short-form video scripts that 25 creators would actually film. 250 pitches, seven models, 1,750 creator-rated scripts.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://davidcue.com/shortform-bench/">
+<style>
+  :root {
+    color-scheme: light;
+    --page: #ffffff; --surface: #fcfcfb; --ink: #1c1a14; --ink-2: #52514e; --muted: #898781;
+    --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,.12);
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;      /* flagship, small, open-weight */
+    --seq: #2a78d6; --r4: #1c5cab; --r3: #6da7ec; --r2: #c3c2b7; --r1: #e1e0d9;
+    --on4: #ffffff; --on3: #0b0b0b; --on2: #0b0b0b; --on1: #0b0b0b;
+    --warn-bg: #fff4d6; --warn-ink: #5c4300; --warn-line: #e9c96a;
+    --serif: "Iowan Old Style", "Charter", "Bitstream Charter", "Palatino Linotype", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+      --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,.12);
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+      --seq: #3987e5; --r4: #3987e5; --r3: #1c5cab; --r2: #52514e; --r1: #383835;
+      --on4: #0b0b0b; --on3: #ffffff; --on2: #ffffff; --on1: #ffffff;
+      --warn-bg: #2e2610; --warn-ink: #f3dfa2; --warn-line: #6b5617;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,.12);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+    --seq: #3987e5; --r4: #3987e5; --r3: #1c5cab; --r2: #52514e; --r1: #383835;
+    --on4: #0b0b0b; --on3: #ffffff; --on2: #ffffff; --on1: #ffffff;
+    --warn-bg: #2e2610; --warn-ink: #f3dfa2; --warn-line: #6b5617;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 17px/1.65 var(--serif); }
+  a { color: inherit; text-decoration-color: var(--axis); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--ink); }
+
+  /* top bar */
+  .topbar { border-bottom: 1px solid var(--grid); }
+  .topbar > div { max-width: 1120px; margin: 0 auto; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .wordmark { font: 600 15px var(--sans); letter-spacing: -.01em; }
+  .code-link { font: 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); margin-left: auto; }
+
+  /* one centred reading column; figures and cards break out wider */
+  main { max-width: 1120px; margin: 0 auto; padding: 0 16px 96px; }
+  main > * { max-width: 680px; margin-left: auto; margin-right: auto; }
+  main > figure, main > .cards { max-width: 1000px; }
+
+  /* hero */
+  .hero { max-width: 780px; text-align: center; padding: 64px 0 12px; }
+  .eyebrow { font: 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font: 11px var(--mono); letter-spacing: .08em; text-transform: uppercase;
+           color: var(--ink-2); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; }
+  .badge::before { content: ""; width: 7px; height: 7px; background: var(--s2); border-radius: 1px; }
+  h1 { font: 400 clamp(40px, 7vw, 64px)/1.04 var(--serif); letter-spacing: -.015em; margin: 16px 0 10px; }
+  .updated { font: 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 26px; }
+  .sub { font: 600 18px/1.3 var(--sans); margin: 0 0 6px; }
+  .dek { font-size: clamp(21px, 3vw, 26px); line-height: 1.3; margin: 0 auto 18px; max-width: 26em; }
+  .intro { font-size: 17px; color: var(--ink-2); margin: 0 auto 18px; max-width: 38em; }
+  .meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 10px; margin: 0 0 8px; }
+  .meta span { font: 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2);
+               border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; }
+  .lede { font-size: 18px; text-align: center; margin-bottom: 30px; }
+
+  h2 { font: 550 30px/1.15 var(--sans); letter-spacing: -.015em; margin-top: 76px; margin-bottom: 14px; }
+  h3 { font: 400 25px/1.2 var(--serif); letter-spacing: -.01em; margin-top: 40px; margin-bottom: 10px; }
+  p { margin-top: 0; margin-bottom: 14px; }
+  ul, ol { margin-top: 0; margin-bottom: 14px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  .small { font-size: 15px; color: var(--ink-2); }
+  .tag { display: inline-block; font: 10px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2);
+         border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; margin-left: 8px; vertical-align: 2px; white-space: nowrap; }
+  /* figures: charts stay in the system sans */
+  figure { margin-top: 22px; margin-bottom: 30px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+           padding: 20px 22px 12px; font-family: var(--sans); }
+  figcaption { margin-bottom: 16px; }
+  .fig-title { font: 400 21px/1.25 var(--serif); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .fig-sub { font-size: 14px; color: var(--ink-2); margin-top: 3px; }
+  .fig-note { font-size: 13px; color: var(--muted); margin-top: 12px; }
+  .fig-foot { font: 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+              border-top: 1px solid var(--grid); margin-top: 14px; padding-top: 9px; }
+  .controls { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin: 0 0 16px; }
+  .controls .lab { font: 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .seg { font: 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 6px 10px; border-radius: 4px; cursor: pointer;
+         color: var(--ink); background: transparent; border: 1px solid var(--border); margin-left: -8px; }
+  .seg[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .seg:focus-visible, .hit:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); margin: 0 0 12px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .sw.sq { border-radius: 2px; }
+
+  /* ranked bars and paired dots share one row layout */
+  .rows { display: grid; gap: 10px; }
+  .row { display: grid; grid-template-columns: minmax(120px, 220px) 1fr; gap: 14px; align-items: center; }
+  .row .name { font-size: 15px; line-height: 1.25; }
+  .row .name small { display: block; font-size: 12px; color: var(--muted); }
+  .track { position: relative; height: 28px; }
+  .track .gridline { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--grid); }
+  .track .base { background: var(--axis); }
+  .bar { position: absolute; left: 0; top: 7px; height: 14px; background: var(--s1); border-radius: 0 4px 4px 0; }
+  .whisker { position: absolute; top: 13px; height: 2px; background: var(--ink); opacity: .55; }
+  .whisker::before, .whisker::after { content: ""; position: absolute; top: -4px; width: 2px; height: 10px; background: inherit; }
+  .whisker::before { left: 0; } .whisker::after { right: 0; }
+  .val { position: absolute; top: 3px; font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 8px; }
+  .axis { display: grid; grid-template-columns: minmax(120px, 220px) 1fr; gap: 14px; margin-top: 4px; }
+  .axis .ticks { position: relative; height: 18px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .axis .ticks span { position: absolute; transform: translateX(-50%); }
+  .axis .ticks span:first-child { transform: none; } .axis .ticks span:last-child { transform: translateX(-100%); }
+  .link { position: absolute; top: 13px; height: 2px; background: var(--axis); }
+  .dot { position: absolute; top: 6px; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; box-shadow: 0 0 0 2px var(--surface); }
+  .hit { cursor: default; }
+
+  /* stacked rating spread */
+  .stack { display: flex; gap: 2px; height: 20px; }
+  .stack > div { min-width: 2px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .stack > div:first-child { border-radius: 4px 0 0 4px; } .stack > div:last-child { border-radius: 0 4px 4px 0; }
+
+  /* tables */
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font: 15px/1.45 var(--sans); }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  th { font: 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: 0; }
+  #board tbody tr:first-child td { background: color-mix(in oklab, var(--seq) 9%, var(--surface)); }
+  table.heat td.cell { text-align: center; font-variant-numeric: tabular-nums; border-bottom: 2px solid var(--surface); border-right: 2px solid var(--surface); }
+  table.heat th.num { text-align: center; }
+  table.heat { table-layout: fixed; min-width: 620px; }
+  table.heat th:first-child { width: 26%; }
+
+  /* scatter */
+  .scatter svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .scatter text { font: 12px system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--muted); }
+  .scatter text.lbl { fill: var(--ink); font-size: 13px; }
+  .scatter text.axt { fill: var(--ink-2); }
+
+  /* example picker */
+  #exPitch { font: 600 15px var(--sans); color: var(--ink); background: var(--surface); border: 1px solid var(--border);
+             border-radius: 4px; padding: 7px 10px; max-width: 100%; min-width: 0; flex: 1 1 280px; }
+  .ex-pitch { border-left: 3px solid var(--axis); padding: 2px 0 2px 14px; margin: 0 0 16px; }
+  .ex-pitch p { font: 16px/1.5 var(--serif); margin: 0 0 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font: 10px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2);
+          border: 1px solid var(--border); border-radius: 4px; padding: 2px 7px; white-space: nowrap; }
+  .ex-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+  .ex-tab { font: 11px var(--mono); letter-spacing: .05em; text-transform: uppercase; padding: 7px 10px; border-radius: 4px; cursor: pointer;
+            color: var(--ink); background: transparent; border: 1px solid var(--border); }
+  .ex-tab[aria-selected="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .ex-tab:focus-visible, #exPitch:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
+  .ex-panel { border: 1px solid var(--grid); border-radius: 6px; padding: 14px 18px 10px; background: var(--page); }
+  .ex-panel .chips { margin-bottom: 10px; }
+  .ex-script p { font: 17px/1.5 var(--serif); margin: 0; padding: 7px 0; border-bottom: 1px solid var(--grid); }
+  .ex-script p:last-child { border-bottom: 0; }
+  .ex-panel details { margin-top: 10px; font-size: 13px; color: var(--ink-2); }
+  .ex-panel summary { cursor: pointer; font: 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 6px 0; }
+  .ex-panel details a { display: block; word-break: break-all; padding: 3px 0; }
+
+  /* cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 18px; margin-bottom: 24px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; font-family: var(--sans); }
+  .card h4 { margin: 0 0 10px; font: 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .card p { font-size: 15px; line-height: 1.5; margin-bottom: 8px; }
+  .lines p { margin: 0; padding: 5px 0; border-bottom: 1px solid var(--grid); font-size: 15px; }
+  .lines p:last-child { border-bottom: 0; }
+  .scale { display: flex; gap: 6px; margin: 4px 0 10px; }
+  .scale span { flex: 1; text-align: center; border: 1px solid var(--border); border-radius: 4px; padding: 4px 0; font-size: 13px; color: var(--ink-2); }
+  .scale span.pick { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .takeaways { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 18px 20px 8px; }
+  .takeaways ul { margin: 0; }
+  .takeaways li { margin-bottom: 12px; }
+
+  #tip { position: fixed; z-index: 10; pointer-events: none; max-width: 280px; background: var(--ink); color: var(--page);
+         font: 13px/1.4 var(--sans); padding: 8px 10px; border-radius: 6px; opacity: 0; transition: opacity .08s; }
+  #tip b { display: block; }
+  footer { margin-top: 72px; padding-top: 18px; border-top: 1px solid var(--grid); text-align: center;
+           font: 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+  @media (max-width: 560px) {
+    body { font-size: 16px; }
+    .hero { padding-top: 40px; }
+    .row, .axis { grid-template-columns: 1fr; gap: 2px; }
+    .axis > div:first-child { display: none; }
+    figure { padding: 16px 14px 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) { #tip { transition: none; } }
+  .byline { font: 15px var(--sans); color: var(--ink-2); margin: 0 0 14px; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; text-align: center; }
+  .author { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+  .author:hover { color: var(--ink); }
+  .author:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="topbar"><div>
+  <span class="wordmark">ShortForm-Bench</span>
+  <a class="code-link" href="https://github.com/dcue3/shortform-bench">Code</a>
+</div></div>
+<main>
+  <header class="hero">
+    <div class="eyebrow">Benchmarks / Creator writing</div>
+    <div class="badge" id="status">Results</div>
+    <h1>ShortForm-Bench</h1>
+    <p class="byline">By <a class="author" href="https://www.linkedin.com/in/david-c-2301b3219/" target="_blank" rel="noopener">David Cue</a></p>
+    <div class="updated" id="updated"></div>
+    <p class="sub">Short-form video scripts for working creators</p>
+    <p class="dek">Can AI models write short-form video scripts that creators would actually film?</p>
+    <p class="intro">I worked with 25 Instagram and TikTok creators across five niches to test how well frontier AI models can help with their day-to-day content writing. Each model was given a creator's channel, ten of their past scripts and a one-line video idea, then had to research the topic and write the script. The creators read the results blind and decided which ones they would actually film.</p>
+    <div class="meta" id="meta"></div>
+  </header>
+    <p class="lede" id="lede"></p>
+
+  <figure id="leaderboard">
+    <figcaption>
+      <div class="fig-title"><span id="rankTitle">Usable rate by model</span></div>
+      <div class="fig-sub" id="rankSub"></div>
+    </figcaption>
+    <div class="controls" role="group" aria-label="Measure">
+      <span class="lab">Measure:</span>
+      <button class="seg" type="button" data-metric="usable" aria-pressed="true">Usable rate</button>
+      <button class="seg" type="button" data-metric="accuracy" aria-pressed="false">Accuracy</button>
+    </div>
+    <div id="rankChart"></div>
+    <div class="fig-note" id="rankNote">Bars show each model's score. The line through the end of each bar is one standard error either side, calculated across creators.</div>
+  </figure>
+
+  <figure>
+    <figcaption>
+      <div class="fig-title">Leaderboard</div>
+      <div class="fig-sub">Every model ran at "high" thinking with the same prompt and the same two tools. Cost is per script.</div>
+    </figcaption>
+    <div class="scroll"><table id="board"></table></div>
+    <div class="fig-note" id="boardNote"></div>
+  </figure>
+
+  <h2>Key takeaways</h2>
+  <div class="takeaways">
+  <ul>
+    <li><strong>Gemini 3.8 Flash leads at 60%.</strong> Compared on the same creators and pitches, it is clearly ahead of Claude Haiku 5.5, GPT-6.2 Astra, Gemini 4 Neon and GPT-6 Luna. Its lead over Claude Fable 5.2 (6 points) and Kimi K3.1 Pro (10 points) is within the margin of error, so those models are not separated from it.</li>
+    <li><strong>Small models match flagships on average, but not in every lab.</strong> Flagships average 44% usable and small models 47%. A flagship script costs $0.46 on average against $0.06 for a small model, about 7 times as much. The cost figures are measured.</li>
+    <li><strong>Kimi K3.1 Pro is the cheapest model not separated from the leader.</strong> It costs $0.08 a script against $0.17 for Gemini 3.8 Flash, or $20 against $41 for all 250 tasks.</li>
+    <li><strong>Accuracy runs from 86% to 92%.</strong> Claude Fable 5.2 is the most accurate and GPT-6 Luna the least. The most usable model, Gemini 3.8 Flash, is not the most accurate at 87%: creators approve scripts with errors they don't notice.</li>
+    <li><strong>Models score highest on pacing and lowest on originality.</strong> Averaged across models, pacing scores 2.77 out of 4 and originality 2.25.</li>
+    <li><strong>Creators chose a script to film for 222 of 250 pitches.</strong> Gemini 3.8 Flash was picked most often, for 65 pitches. For 28 pitches, no model produced a script the creator would film.</li>
+  </ul>
+  </div>
+
+  <h2>About the benchmark</h2>
+  <p>Short-form scripts are hard for AI to write well. A creator wants to give a one-line idea and get back a script that is researched, correct, and sounds like them. Models tend towards an average voice, and an average script is one a creator rewrites or throws away.</p>
+  <p>A script is only good if the creator would use it, and no automated judge can decide that for them. So the judge here is the creator. Each model writes scripts for real creators' channels, and each creator decides whether they would film what they were given.</p>
+  <p>The benchmark covers educational content: explainers, lists and advice. These types of videos are structured and rely on factual evidence, making them ideal for evaluation. 25 creators take part, five in each of five niches: personal finance and business, technology, fitness, science, and history and culture. Each has ten pitches, for 250 tasks.</p>
+
+  <h2>Results</h2>
+
+  <h3>Does a flagship model matter?</h3>
+  <p id="pairText"></p>
+  <figure>
+    <figcaption>
+      <div class="fig-title">Flagship and small model from the same lab</div>
+      <div class="fig-sub">Usable rate. Each row pairs a lab's largest model with its small one.</div>
+    </figcaption>
+    <div class="legend" id="pairLegend"></div>
+    <div id="pairChart"></div>
+    <div class="fig-note">Cost per script is measured on the scripts themselves.</div>
+  </figure>
+
+  <h3>Cost against usable rate</h3>
+  <p id="costText"></p>
+  <figure class="scatter">
+    <figcaption>
+      <div class="fig-title">Usable rate against cost per script</div>
+      <div class="fig-sub">Cost is on a log scale: each gridline is ten times the one before.</div>
+    </figcaption>
+    <div class="legend" id="scatterLegend"></div>
+    <div id="scatter"></div>
+  </figure>
+
+  <h3>Where models are strong and weak</h3>
+  <p>Creators score every script from 1 to 4 on five things. The table shows each model's average. Shading compares models within a column, so a dark cell is the strongest model on that measure, not a high score in absolute terms.</p>
+  <p id="subText"></p>
+  <figure>
+    <figcaption>
+      <div class="fig-title">Sub-scores by model</div>
+      <div class="fig-sub">Average creator score, 1 (poor) to 4 (excellent).</div>
+    </figcaption>
+    <div class="scroll"><table class="heat" id="heat"></table></div>
+    <div class="fig-note">Sub-scores come from the same creator who gives the overall rating, so they tend to move with it.</div>
+  </figure>
+
+  <h3>How ratings are spread</h3>
+  <p>Usable rate counts a script rated 3 or 4. The spread underneath it shows whether a model's usable scripts were mostly ready to film or mostly needed a few fixes, and whether its misses were near-misses or rejections.</p>
+  <p id="spreadText"></p>
+  <figure>
+    <figcaption>
+      <div class="fig-title">Overall rating, share of scripts</div>
+      <div class="fig-sub">Blue is usable (rated 3 or 4). Grey is not.</div>
+    </figcaption>
+    <div class="legend" id="stackLegend"></div>
+    <div id="stackChart"></div>
+  </figure>
+
+  <h3 data-full hidden>Accuracy</h3>
+  <p data-full hidden id="accText"></p>
+  <figure data-full hidden>
+    <figcaption>
+      <div class="fig-title">Accuracy by model</div>
+      <div class="fig-sub">Share of a script's factual claims that the cited page supports. The axis starts at 75%.</div>
+    </figcaption>
+    <div id="accChart"></div>
+    <div class="fig-note">Dots are each model's accuracy; lines are one standard error either side.</div>
+  </figure>
+
+  <h3 data-full hidden>By niche</h3>
+  <p data-full hidden id="nicheText"></p>
+  <figure data-full hidden>
+    <figcaption>
+      <div class="fig-title">Usable rate by niche</div>
+      <div class="fig-sub">Shading compares models within each niche.</div>
+    </figcaption>
+    <div class="scroll"><table class="heat" id="nicheTable"></table></div>
+  </figure>
+
+  <h2>Methodology</h2>
+
+  <h3>Creators and tasks</h3>
+  <p>Creators were picked from TikTok and Instagram through a combination of engagement metrics and content analysis. The resulting lists were then manually verified to meet the requirements of the study. A creator qualifies if they are an individual or small team making their own scripted, spoken, educational videos in English, 20 to 180 seconds long, with at least ten structured explainers, lists or advice videos among their recent posts. Companies, clip aggregators, reaction channels and mass-produced AI content are excluded.</p>
+  <p>A task is one creator plus one pitch. Each pitch is a video idea the creator approved for their own channel and agreed to film. The channel descriptions and pitches were first drafted from each creator's past videos, then checked and approved by the creator. Creators agreed in writing to the use of their transcripts, are paid, and are not named.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Part of the task</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td>Channel description</td><td>Up to 150 words on who watches, what the channel covers and how the creator sounds</td></tr>
+      <tr><td>Past scripts</td><td>Ten of the creator's published videos, as transcripts, each with its length in seconds</td></tr>
+      <tr><td>Pitch</td><td>A title and one or two sentences on a video the creator hasn't made, with a target length in seconds</td></tr>
+      <tr><td>Tools</td><td>Web search and page fetch, the same for every model, up to 20 calls</td></tr>
+      <tr><td>Output</td><td>A script of spoken lines only, written line by line, plus the pages it relied on</td></tr>
+    </tbody>
+  </table></div>
+
+  <figure id="examples">
+    <figcaption>
+      <div class="fig-title">Example tasks and scripts</div>
+      <div class="fig-sub">Three real pitches from the benchmark, with the script each model wrote. Pick a pitch, then switch between models.</div>
+    </figcaption>
+    <div class="controls">
+      <span class="lab">Pitch:</span>
+      <select id="exPitch" aria-label="Pitch"></select>
+    </div>
+    <div class="ex-pitch" id="exInfo"></div>
+    <div class="ex-tabs" id="exTabs" role="tablist" aria-label="Models"></div>
+    <div class="ex-panel" id="exPanel" role="tabpanel"></div>
+    <div class="fig-note">These scripts are real model output from a test round, shown exactly as written. The creator's channel description and past scripts, which the model also receives, are not shown.</div>
+  </figure>
+
+  <h3>How scripts are generated</h3>
+  <p>Every model gets the same plain prompt: who the script is for, what it is given, the rules for the script, and the reply format. The prompt carries no writing advice and is not tuned for any model. The model never sees the creator's name, links, captions or view counts, so it can't look them up.</p>
+  <p>Research tools run on our side, not the model provider's. Each model's built-in web search stays off, so every model searches the same index and reads pages through the same reader; otherwise the benchmark would partly rank search products. Within a round, the first result for a search or page is saved and reused, so two models that ask the same thing get the same answer. Search uses Google results through Serper, called via the Composio command-line tool. Pages are read by our own reader; when a site refuses it, Serper's page reader is used instead.</p>
+  <p>Each model writes one script per task. There are no second attempts and no picking the best of several. A request is retried only when the service fails, never because of what a model wrote. Every model is called through one API with the same settings, and the script is never edited before the creator sees it.</p>
+
+  <h3>Scripts are written line by line</h3>
+  <p>Short-form creators write and read scripts one line at a time. Models are asked for one spoken line on each line of text, each a single beat said in one breath, with no paragraphs, headings, stage directions or on-screen text. The examples above show what comes back. Length is given the way creators think about it, as a target in seconds, not a word count.</p>
+
+  <h3>How creators rate</h3>
+  <p>Each creator reads every script written for their own pitches. Scripts are unlabelled and in shuffled order, so the creator doesn't know which model wrote which. They give each script an overall rating and five sub-scores.</p>
+  <div class="cards">
+    <div class="card">
+      <h4>Overall: would I film this?</h4>
+      <div class="scale"><span>1</span><span>2</span><span class="pick">3</span><span>4</span></div>
+      <p class="small"><strong>4</strong> Film as is. <strong>3</strong> Small edits, faster than writing it myself. <strong>2</strong> Heavy rewrite. <strong>1</strong> Reject.</p>
+      <p class="small">A script rated 3 or 4 is <strong>usable</strong>.</p>
+    </div>
+    <div class="card">
+      <h4>Five sub-scores, each 1 to 4</h4>
+      <p class="small"><strong>Voice.</strong> Does it sound like me?<br>
+      <strong>Hook.</strong> Would the first lines stop someone scrolling?<br>
+      <strong>Substance.</strong> Is it specific, interesting and correct as far as I can tell?<br>
+      <strong>Pacing.</strong> Read line by line, does it move well?<br>
+      <strong>Originality.</strong> Is there an angle or line I wouldn't have thought of, or does it read as generic?</p>
+    </div>
+  </div>
+  <p>For each pitch, the creator then films and posts one of the scripts they rated usable. Filming is the check on the rating: a 3 or 4 is a commitment to shoot.</p>
+
+  <h3>Accuracy</h3>
+  <p>A creator can approve a script with an error they didn't notice, so accuracy is measured separately. Each model lists the pages its script relies on. An automated checker pulls the factual claims out of the script and compares each with the saved copy of the page the model cited. Accuracy is the share of claims the cited page supports. A claim with no source counts as unsupported. Accuracy was checked using Claude Opus 5.5, which looked at the cited sources and confirmed whether they matched the script's claims.</p>
+
+  <h3>Scoring and uncertainty</h3>
+  <p><strong>Usable rate</strong> is the share of a model's scripts rated 3 or 4. It is worked out for each creator and then averaged, so every creator counts equally. Sub-scores are averaged the same way and are not combined into one number.</p>
+  <p>Every score is shown with its standard error: how far it would typically move if the benchmark were rerun with a different set of creators. It is calculated across creators, not across single ratings, because ten scripts judged by the same person are not independent. <span id="ciText"></span></p>
+  <p>To decide whether one model is really ahead of another, the two are compared on the same creators and pitches. A tough rater or a hard pitch affects both models equally, so it cancels out, and the gap between two models is known more precisely than either model's own score. Each gap is reported with a 95% confidence interval, found by resampling whole creators. A model counts as behind the leader only when that interval lies entirely above zero.</p>
+
+  <h3>Models and settings</h3>
+  <div class="scroll"><table id="settings"></table></div>
+
+  <h2>Limitations</h2>
+  <ul>
+    <li><strong>Small panel.</strong> 25 creators can separate models that differ by about 10 points, not by 2 or 3.</li>
+    <li><strong>Words only.</strong> Delivery, visuals and editing are not tested, and some creators teach partly through what is on screen.</li>
+    <li><strong>Willing creators.</strong> People who agree to take part may be more open to AI scripts than creators in general.</li>
+    <li><strong>One person's view.</strong> Each script is rated by one creator, and the sub-scores come from that same person.</li>
+    <li><strong>Reading several takes on one pitch.</strong> Models often land on the same sources and a similar script, so later versions can feel repetitive. Order is shuffled so this falls evenly across models.</li>
+    <li><strong>Automated accuracy.</strong> The checker can miss an unsupported claim or wrongly flag a supported one.</li>
+    <li><strong>The web changes.</strong> Models research live, so a rerun months later will not find the same pages.</li>
+  </ul>
+
+  <h2>Data and code</h2>
+  <p>The tasks, scripts and creator ratings are kept private so models can't be trained on them, apart from the three example pitches shown above. The generation harness, the exact prompt and the tools are public at <a href="https://github.com/dcue3/shortform-bench">github.com/dcue3/shortform-bench</a>, along with the three example tasks and every model's script for them. The harness is plain Python with no dependencies, and records the full conversation, every tool call, token counts, cost and timings for each script.</p>
+
+  <footer id="foot"></footer>
+</main>
+<div id="tip" role="status"></div>
+
+<script id="data" type="application/json">{"updated": "November 21, 2026", "generated": "2026-11-21", "creators": 25, "tasks": 250, "rated_creators": 25, "rated_scripts": 1750, "niches": ["personal finance and business", "technology and AI", "fitness and exercise science", "science", "history and culture"], "none_filmed": 28, "measured_scripts": 1750, "measured_pitches": 250, "prompt_version": "2", "models": [{"id": "anthropic/claude-fable-5.2", "name": "Claude Fable 5.2", "lab": "Anthropic", "size": "flagship", "thinking": "High", "usable": 0.532, "usable_se": 0.064, "usable_count": 133, "n": 250, "overall": 2.553, "accuracy": 0.9248, "accuracy_se": 0.0062, "ratings": {"4": 0.192, "3": 0.34, "2": 0.288, "1": 0.176}, "sub": {"voice": 2.34, "hook": 2.53, "substance": 2.26, "pacing": 2.95, "originality": 2.56}, "filmed": 44, "by_niche": {"personal finance and business": 0.7, "technology and AI": 0.46, "fitness and exercise science": 0.22, "science": 0.66, "history and culture": 0.62}, "flags": {"fact_wrong": 0.0442, "wrong_length": 0.1004, "off_pitch": 0.0562, "wouldnt_say": 0.1165}, "no_script": 0.004, "inside_target": 0.8233, "cost": 0.655, "cost_total": 163.74, "seconds": 92.1, "tools": 9.5, "lines": 24.7, "scripts": 250, "vs_leader": {"gap": 0.064, "lo": -0.048, "hi": 0.176, "separated": false}}, {"id": "anthropic/claude-haiku-5.5", "name": "Claude Haiku 5.5", "lab": "Anthropic", "size": "small", "thinking": "High", "usable": 0.436, "usable_se": 0.0702, "usable_count": 109, "n": 250, "overall": 2.358, "accuracy": 0.8955, "accuracy_se": 0.0074, "ratings": {"4": 0.168, "3": 0.268, "2": 0.316, "1": 0.244}, "sub": {"voice": 2.39, "hook": 2.47, "substance": 2.18, "pacing": 2.58, "originality": 2.23}, "filmed": 25, "by_niche": {"personal finance and business": 0.68, "technology and AI": 0.34, "fitness and exercise science": 0.1, "science": 0.6, "history and culture": 0.46}, "flags": {"fact_wrong": 0.0643, "wrong_length": 0.1486, "off_pitch": 0.0723, "wouldnt_say": 0.1165}, "no_script": 0.004, "inside_target": 0.7831, "cost": 0.0136, "cost_total": 3.4, "seconds": 69.8, "tools": 10.8, "lines": 18.2, "scripts": 250, "vs_leader": {"gap": 0.16, "lo": 0.032, "hi": 0.284, "separated": true}}, {"id": "openai/gpt-6.2-astra", "name": "GPT-6.2 Astra", "lab": "OpenAI", "size": "flagship", "thinking": "High", "usable": 0.428, "usable_se": 0.0585, "usable_count": 107, "n": 250, "overall": 2.304, "accuracy": 0.9112, "accuracy_se": 0.0056, "ratings": {"4": 0.1, "3": 0.328, "2": 0.348, "1": 0.224}, "sub": {"voice": 2.44, "hook": 2.21, "substance": 2.38, "pacing": 2.63, "originality": 2.15}, "filmed": 21, "by_niche": {"personal finance and business": 0.26, "technology and AI": 0.36, "fitness and exercise science": 0.5, "science": 0.52, "history and culture": 0.5}, "flags": {"fact_wrong": 0.064, "wrong_length": 0.08, "off_pitch": 0.08, "wouldnt_say": 0.096}, "no_script": 0.0, "inside_target": 0.928, "cost": 0.2624, "cost_total": 65.61, "seconds": 82.5, "tools": 9.5, "lines": 18.4, "scripts": 250, "vs_leader": {"gap": 0.168, "lo": 0.056, "hi": 0.276, "separated": true}}, {"id": "openai/gpt-6-luna", "name": "GPT-6 Luna", "lab": "OpenAI", "size": "small", "thinking": "High", "usable": 0.364, "usable_se": 0.0583, "usable_count": 91, "n": 250, "overall": 2.148, "accuracy": 0.864, "accuracy_se": 0.0068, "ratings": {"4": 0.1, "3": 0.264, "2": 0.316, "1": 0.312}, "sub": {"voice": 2.23, "hook": 2.17, "substance": 2.17, "pacing": 2.65, "originality": 2.05}, "filmed": 15, "by_niche": {"personal finance and business": 0.24, "technology and AI": 0.32, "fitness and exercise science": 0.24, "science": 0.52, "history and culture": 0.5}, "flags": {"fact_wrong": 0.0685, "wrong_length": 0.0524, "off_pitch": 0.0726, "wouldnt_say": 0.129}, "no_script": 0.008, "inside_target": 0.9355, "cost": 0.0039, "cost_total": 0.98, "seconds": 48.0, "tools": 10.9, "lines": 16.0, "scripts": 250, "vs_leader": {"gap": 0.232, "lo": 0.128, "hi": 0.34, "separated": true}}, {"id": "google/gemini-4-neon", "name": "Gemini 4 Neon", "lab": "Google", "size": "flagship", "thinking": "High", "usable": 0.368, "usable_se": 0.055, "usable_count": 92, "n": 250, "overall": 2.289, "accuracy": 0.9226, "accuracy_se": 0.007, "ratings": {"4": 0.088, "3": 0.28, "2": 0.436, "1": 0.176}, "sub": {"voice": 2.42, "hook": 2.34, "substance": 2.26, "pacing": 2.74, "originality": 2.04}, "filmed": 18, "by_niche": {"personal finance and business": 0.32, "technology and AI": 0.16, "fitness and exercise science": 0.36, "science": 0.44, "history and culture": 0.56}, "flags": {"fact_wrong": 0.0653, "wrong_length": 0.0857, "off_pitch": 0.0694, "wouldnt_say": 0.098}, "no_script": 0.02, "inside_target": 0.9265, "cost": 0.4511, "cost_total": 112.78, "seconds": 226.3, "tools": 15.2, "lines": 21.9, "scripts": 250, "vs_leader": {"gap": 0.228, "lo": 0.116, "hi": 0.332, "separated": true}}, {"id": "google/gemini-3.8-flash", "name": "Gemini 3.8 Flash", "lab": "Google", "size": "small", "thinking": "High", "usable": 0.596, "usable_se": 0.0615, "usable_count": 149, "n": 250, "overall": 2.735, "accuracy": 0.8718, "accuracy_se": 0.0087, "ratings": {"4": 0.288, "3": 0.308, "2": 0.248, "1": 0.152}, "sub": {"voice": 2.74, "hook": 2.69, "substance": 2.51, "pacing": 2.97, "originality": 2.45}, "filmed": 65, "by_niche": {"personal finance and business": 0.6, "technology and AI": 0.5, "fitness and exercise science": 0.54, "science": 0.68, "history and culture": 0.66}, "flags": {"fact_wrong": 0.0843, "wrong_length": 0.0602, "off_pitch": 0.0683, "wouldnt_say": 0.0803}, "no_script": 0.004, "inside_target": 0.9277, "cost": 0.1653, "cost_total": 41.33, "seconds": 196.9, "tools": 14.1, "lines": 21.7, "scripts": 250, "vs_leader": null}, {"id": "moonshotai/kimi-k3.1-pro", "name": "Kimi K3.1 Pro", "lab": "Moonshot AI", "size": "open", "thinking": "High", "usable": 0.5, "usable_se": 0.0586, "usable_count": 125, "n": 250, "overall": 2.537, "accuracy": 0.8988, "accuracy_se": 0.0067, "ratings": {"4": 0.176, "3": 0.324, "2": 0.356, "1": 0.14}, "sub": {"voice": 2.32, "hook": 2.58, "substance": 2.47, "pacing": 2.88, "originality": 2.24}, "filmed": 34, "by_niche": {"personal finance and business": 0.52, "technology and AI": 0.44, "fitness and exercise science": 0.3, "science": 0.62, "history and culture": 0.62}, "flags": {"fact_wrong": 0.1004, "wrong_length": 0.0803, "off_pitch": 0.0281, "wouldnt_say": 0.0683}, "no_script": 0.004, "inside_target": 0.9438, "cost": 0.081, "cost_total": 20.24, "seconds": 64.0, "tools": 6.6, "lines": 24.0, "scripts": 250, "vs_leader": {"gap": 0.096, "lo": -0.012, "hi": 0.208, "separated": false}}], "examples": [{"title": "Roth or traditional 401(k)? Here's exactly how to choose", "topic": "How the two 401(k) tax treatments differ and how a worker's tax bracket now versus in retirement drives the choice, shown with one worked dollar example. The viewer should come away knowing which questions decide it for them.", "target": [60, 90], "niche": "personal finance and business", "scripts": [{"name": "Claude Fable 5.2", "size": "flagship", "ok": true, "lines": ["Roth or traditional 401k? Here's exactly how to choose.", "And it really comes down to one thing, your tax bracket.", "Both are the same 401k, the only difference is when the IRS gets paid.", "Traditional, your money goes in before taxes, and you pay income tax when you pull it out.", "Roth, you pay the tax today, and once you're 59 and a half and the account's been open five years, it all comes out tax free.", "Here's the math.", "Let's say you're in the 22% bracket and you've got $10,000 of salary to invest.", "Traditional, the full $10,000 goes in.", "Roth, you pay $2,200 in tax first, so $7,800 goes in.", "Now let's say your investments quadruple by the time you retire.", "Traditional is sitting at $40,000, Roth is at $31,200.", "But the traditional still owes tax.", "If you're still in the 22% bracket in retirement, you keep $31,200.", "The exact same number. It's a tie.", "Which is crazy, because people argue about this all day.", "But if you drop to the 12% bracket in retirement, traditional leaves you with $35,200.", "That's $4,000 more than the Roth.", "And if you climb to the 24% bracket, you keep $30,400, and the Roth wins.", "So here are the questions that decide it for you.", "One, what bracket are you in today?", "Two, will you be in a higher or lower bracket when you retire?", "Higher later, lean Roth. Lower later, lean traditional.", "Three, be honest, will you actually invest the tax savings from the traditional, or just spend it?", "If you're gonna spend it, the Roth forces you to save it.", "And if you have no idea, you don't have to pick.", "You can split your contributions between both, up to $25,500 total for 2027.", "This is simplified math, your real tax return has more moving parts, so do your own research.", "Are you Roth or traditional? Let me know down below.", "And as always, if you're looking to grow your net worth, follow me."], "words": 334, "seconds": 98.8, "inside": false, "tools": 9, "cost": 0.473696, "took": 57.7, "sources": ["https://www.irs.gov/retirement-plans/roth-comparison-chart", "https://www.irs.gov/retirement-plans/plan-participant-employee/retirement-topics-designated-roth-account", "https://www.irs.gov/newsroom/401k-limit-increases-to-25500-for-2027-ira-limit-remains-7500", "https://www.fidelity.com/learning-center/personal-finance/tax-brackets", "https://www.fidelity.com/viewpoints/retirement/spender-or-saver"], "work": {"queries": ["IRS Roth comparison chart Roth 401(k) vs traditional 401(k) designated Roth account", "IRS 401(k) contribution limit 2026 $24,500 catch-up", "2026 federal income tax brackets single married filing jointly 12% 22% thresholds standard deduction", "Roth vs traditional 401(k) how to choose tax bracket now vs retirement example"], "pages_read": 5, "pages_failed": 0, "requests": 3, "retried": false}}, {"name": "Claude Haiku 5.5", "size": "small", "ok": true, "lines": ["Roth or traditional 401(k)? Here's how to pick.", "Traditional comes out before tax, so you get the break now and pay tax on withdrawals.", "Roth is the opposite. You pay tax now, and qualified withdrawals are tax-free.", "Let's run one example.", "You're single with $70,000 of taxable income, so you're in the 22% bracket.", "You put $10,000 into a traditional 401(k), which saves you $2,200 in federal tax this year.", "That $10,000 really costs you $7,800 of take-home pay.", "Same $7,800 into a Roth.", "Say both double by retirement.", "Traditional gives you $20,000, but if you retire in the 12% bracket, you owe $2,400 and keep $17,600.", "Roth turns your $7,800 into $15,600, and you keep all of it.", "Flip it. If you retire in the 24% bracket, traditional leaves you $15,200, and Roth wins at $15,600.", "So the rule is simple: lower bracket later, go traditional. Higher bracket later, go Roth.", "To decide, ask yourself three things.", "Is your bracket higher now than you expect in retirement?", "Do you need the tax break now to hit your match without squeezing your paycheck?", "Are your earnings likely to climb a lot?", "The 2026 limit is $24,500 across both types combined, and it goes to $25,500 in 2027.", "This ignores state tax, so do your own research.", "Tell me your bracket in the comments, and if you're looking to grow your net worth, follow me."], "words": 234, "seconds": 69.2, "inside": true, "tools": 9, "cost": 0.012817, "took": 66.9, "sources": ["https://www.irs.gov/retirement-plans/roth-comparison-chart", "https://www.fidelity.com/learning-center/personal-finance/retirement/401k-taxes", "https://www.irs.gov/newsroom/401k-limit-increases-to-25500-for-2027-ira-limit-remains-7500", "https://www.fidelity.com/learning-center/personal-finance/tax-brackets", "https://www.troweprice.com/personal-investing/resources/insights/what-you-need-know-deciding-between-roth-and-traditional.html"], "work": {"queries": ["IRS 401(k) Roth vs traditional tax treatment contributions taxed withdrawals", "2026 401(k) contribution limit IRS announcement", "Roth vs traditional 401(k) choose based on current tax bracket vs expected retirement tax bracket", "2026 federal income tax brackets single filers 22% 24% IRS Rev. Proc. 2025-32"], "pages_read": 5, "pages_failed": 0, "requests": 5, "retried": false}}, {"name": "GPT-6.2 Astra", "size": "flagship", "ok": true, "lines": ["Your traditional 401(k) could show $30,000, your Roth could show $20,400, and you could have the exact same amount to spend.", "Here's how.", "Let's say you're setting aside $10,000 of your pay, and those dollars fall in the 32% federal income tax bracket.", "Go Roth and you pay $3,200 in income tax today.", "That leaves $6,800 to invest.", "Say it triples by the time you're 65 and you've had the Roth for more than five years.", "That's $20,400 you can take out tax free.", "Now go traditional.", "You invest the whole ten grand before income tax.", "Same investment, same growth, now you've got $30,000.", "Looks like traditional won, right?", "But if you pull that money out at 32%, you're right back at $20,400.", "Now change just one thing.", "What if those withdrawals are taxed at 22% instead?", "Now you keep $23,400.", "That's three grand more than the Roth from the exact same paycheck.", "So here's what I'd ask before I check either box.", "What tax rate would I pay on this money today?", "And once I count things like a pension and my other taxable retirement income, what rate would I pay to pull this money out?", "If I expect a lower rate in retirement, I'd lean traditional.", "If I expect a higher rate, I'd lean Roth and pay the lower rate today.", "And if you're not sure, you can split your contributions if your plan offers both.", "If you're looking to grow your net worth, follow me."], "words": 248, "seconds": 73.4, "inside": true, "tools": 12, "cost": 0.278451, "took": 123.2, "sources": ["https://www.intentionallivingfp.com/insights/roth-vs-traditional-401k-high-earners", "https://www.irs.gov/retirement-plans/roth-comparison-chart", "https://www.troweprice.com/personal-investing/resources/insights/what-you-need-know-deciding-between-roth-and-traditional.html"], "work": {"queries": ["Roth traditional 401k equal take home pay marginal tax rate same example retirement tax bracket contributions Fidelity 1000 22%", "site:irs.gov designated Roth 401k traditional pre-tax contributions taxable retirement five taxable years age 59 1/2 can contribute both", "traditional roth 401k same tax rate mathematical example taxed at withdrawal marginal rate next dollar retirement pension taxable income choosing Roth traditional Vanguard", "Roth traditional 401(k) \"$1,560\" \"$780\" doubles \"$2,000\" tax example", "Roth traditional 401k \"$1,520\" \"$760\" doubles retirement tax 24% $1,000 example", "Roth traditional 401k if same tax rate money doubles example $1000 $800 $2000 $1600 same after tax retirement doubled tax rate tax bracket"], "pages_read": 3, "pages_failed": 1, "requests": 5, "retried": false}}, {"name": "GPT-6 Luna", "size": "small", "ok": true, "lines": ["Roth or traditional 401(k)? Here's exactly how to choose: compare your tax rate now with your tax rate when you withdraw the money.", "Traditional contributions go in before federal income tax, lowering your taxable income now, but withdrawals are taxed later.", "Roth contributions are taxed now, but qualified withdrawals, including investment growth, are generally tax-free.", "Here's a worked example.", "Say your next $100 of pay faces a 24% tax rate today.", "With traditional, you can put all $100 into the account.", "With Roth, you pay $24 in tax first, so $76 goes in.", "Now ignore investment growth for a second.", "If your tax rate on those traditional withdrawals is 12% in retirement, that $100 nets $88, compared with $76 in Roth.", "But if that future rate is 32%, traditional nets $68, while Roth still nets $76.", "With the same investment growth, the comparison still comes down to those tax rates.", "So ask yourself: what's my marginal tax rate on contributions today, and what might my marginal tax rate be on withdrawals in retirement?", "If it's higher now, traditional can make more sense.", "If it's higher later, Roth can make more sense.", "And if you can't call it, your plan may let you split contributions between both.", "Do your own research, because future tax rates can change.", "If you're looking to grow your net worth, follow me."], "words": 226, "seconds": 66.9, "inside": true, "tools": 12, "cost": 0.004645, "took": 66.6, "sources": ["https://www.irs.gov/retirement-plans/plan-participant-employee/401k-resource-guide-plan-participants-401k-plan-overview", "https://www.irs.gov/retirement-plans/retirement-plans-faqs-on-designated-roth-accounts", "https://www.fidelity.com/viewpoints/retirement/spender-or-saver"], "work": {"queries": ["IRS Roth designated 401(k) contributions included taxable income qualified distributions tax free traditional 401(k) contributions excluded income distributions taxable", "Roth vs traditional 401k tax bracket now retirement choose tax rate comparison example official", "IRS 401(k) Roth contributions after tax traditional pre-tax distributions taxable", "site:irs.gov 401(k) pre-tax contributions reduce taxable income withdrawals taxable traditional 401k", "Vanguard Roth traditional 401k compare tax rate now retirement marginal tax bracket", "Fidelity Roth vs traditional 401k tax rate now retirement marginal bracket traditional Roth decision", "T Rowe Price Roth traditional 401k tax bracket now retirement choose current marginal tax rate"], "pages_read": 3, "pages_failed": 0, "requests": 6, "retried": false}}, {"name": "Gemini 4 Neon", "size": "flagship", "ok": true, "lines": ["Roth or traditional 401(k)?", "Here's exactly how to choose.", "It comes down to when the IRS gets its cut.", "Traditional goes in pre-tax, lowering your taxable income today.", "Then you pay income tax when you withdraw in retirement.", "Roth goes in after tax and grows tax-free.", "After age 59 and a half and five years, qualified withdrawals come out federal tax-free.", "Now here's the crazy part most people miss.", "Say you have $10,000 before taxes, and it grows five times by retirement.", "If you're in the 22% federal bracket today and 22% later, both accounts tie.", "Traditional grows to $50,000, minus 22% tax, leaving $39,000.", "Roth pays 22% upfront, so $7,800 grows five times to $39,000 tax-free.", "Exact same money.", "Now watch when your bracket changes.", "In the 12% bracket today and 22% in retirement?", "Roth pays 12% upfront, so $8,800 grows to $44,000 tax-free instead of $39,000.", "Flip it, 22% today to 12% later, and traditional wins by $5,000.", "So three questions decide it for you.", "One, is your tax bracket lower now or in retirement?", "Lower now usually favors Roth, higher now favors traditional.", "Two, can you take a smaller paycheck today for tax-free money later?", "Three, do you want tax flexibility in retirement?", "Roth 401(k)s have no lifetime required minimum distributions.", "And if your job offers both, you can split contributions up to the annual limit.", "Do your own research.", "Which one are you using?", "Let me know below, and if you're looking to grow your net worth, follow me."], "words": 253, "seconds": 74.9, "inside": true, "tools": 13, "cost": 0.374559, "took": 192.5, "sources": ["https://www.schwab.com/learn/story/should-you-consider-roth-401k", "https://www.irs.gov/retirement-plans/roth-comparison-chart", "https://www.fidelity.com/learning-center/personal-finance/tax-brackets", "https://www.octoberthree.com/articles/roth-vs-regular-401-k-the-math/", "https://www.nerdwallet.com/retirement/learn/roth-401k-vs-401k"], "work": {"queries": ["Roth vs traditional 401k IRS tax rules difference", "Roth vs traditional 401k tax bracket example Fidelity OR Vanguard OR Schwab", "IRS federal income tax brackets 2026 OR 2025 401k contribution limit", "IRS federal income tax brackets 2026 12% 22% 24%", "\"Roth vs. traditional 401(k)\" example \"tax bracket\" math Fidelity OR Vanguard OR NerdWallet", "Roth vs traditional 401k worked example dollar comparison same tax rate", "\"Roth 401(k) vs. traditional 401(k)\" Vanguard OR NerdWallet OR Bankrate"], "pages_read": 5, "pages_failed": 0, "requests": 7, "retried": false}}, {"name": "Gemini 3.8 Flash", "size": "small", "ok": true, "lines": ["Roth or traditional 401(k)?", "Most people get this wrong, but here's exactly how to choose.", "A traditional 401(k) takes pre-tax dollars, lowering your taxable income today.", "But in retirement, every dollar you withdraw is taxed as ordinary income.", "A Roth 401(k) uses after-tax dollars, so there's no tax break today.", "Instead, your qualified withdrawals in retirement are completely tax-free.", "Plus, Roth 401(k)s have no required minimum distributions during your lifetime.", "Here's the worked dollar example.", "Say you invest five thousand dollars.", "At a seven percent return over thirty years, that grows to thirty-eight thousand sixty-one dollars.", "In a traditional account, paying a twenty-four percent tax at withdrawal takes nine thousand one hundred and thirty-four dollars.", "You walk away with twenty-eight thousand nine hundred and twenty-seven dollars.", "In a Roth, you keep that full thirty-eight thousand sixty-one dollars tax-free.", "How you choose comes down to two questions.", "One: will your tax bracket be higher now, or in retirement?", "If your bracket will be higher in retirement, Roth wins because you lock in the lower rate today.", "If you're in peak earning years and your bracket will drop, traditional wins because you take the deduction at your highest rate.", "Two: do you need cash in your paycheck right now?", "If money is tight, traditional gives you that immediate tax relief.", "If you're not sure, you can even split your contributions between both accounts.", "Do your own research, but let me know: are you team Roth or traditional?", "And if you're looking to grow your net worth, follow me."], "words": 256, "seconds": 75.7, "inside": true, "tools": 20, "cost": 0.23413, "took": 274.7, "sources": ["https://www.fidelity.com/viewpoints/retirement/spender-or-saver", "https://www.schwab.com/learn/story/should-you-consider-roth-401k", "https://www.nerdwallet.com/retirement/learn/roth-401k-vs-401k", "https://www.troweprice.com/personal-investing/resources/insights/what-you-need-know-deciding-between-roth-and-traditional.html"], "work": {"queries": ["traditional vs roth 401k tax bracket worked example Fidelity Vanguard", "\"traditional 401(k)\" \"roth 401(k)\" \"tax bracket\" example site:nerdwallet.com OR site:investopedia.com", "\"traditional 401(k)\" \"roth 401(k)\" \"example\" tax bracket \"10,000\" OR \"5,000\" site:investopedia.com OR site:fidelity.com OR site:schwab.com", "\"traditional 401k\" \"roth 401k\" \"tax bracket\" \"example\" \"10,000\" OR \"1,000\" site:investopedia.com OR site:bankrate.com", "\"traditional 401(k)\" \"roth 401(k)\" site:schwab.com \"tax bracket\"", "\"traditional 401(k)\" \"roth 401(k)\" \"tax bracket\" \"example\" \"retire\" \"pay\" \"taxes\" site:investopedia.com", "site:investopedia.com traditional vs roth 401k tax bracket example", "\"traditional 401(k)\" \"roth\" \"example\" \"tax bracket\" \"22%\" \"12%\" OR \"24%\"", "site:troweprice.com \"deciding between roth and traditional\"", "\"traditional 401(k)\" \"roth 401(k)\" \"example\" \"$10,000\" site:investopedia.com OR site:bankrate.com", "\"traditional 401(k)\" \"roth 401(k)\" \"tax bracket\" \"example\" site:bankrate.com", "site:bankrate.com traditional vs roth 401k"], "pages_read": 4, "pages_failed": 2, "requests": 21, "retried": false}}, {"name": "Kimi K3.1 Pro", "size": "open", "ok": true, "lines": ["Roth or traditional 401(k)?", "Stop guessing.", "Start with one question:", "Do you want to pay taxes now, or later?", "Traditional contributions go in before taxes.", "That lowers your taxable income today, but your contributions and earnings are taxed when you withdraw them.", "Roth contributions go in after taxes.", "You get no break today, but qualified withdrawals, including the growth, are tax-free.", "Here's the math almost nobody shows you.", "Say you're in the 24% tax bracket and have $10,000 of income to invest.", "Traditional lets you invest all $10,000.", "Roth means paying $2,400 in tax first, so $7,600 goes in.", "Both options reduce your take-home pay by the same $7,600.", "Now say the money quadruples.", "Traditional grows to $40,000.", "Roth grows to $30,400.", "If your retirement tax rate is 22%, traditional leaves you $31,200 after tax.", "That beats the tax-free Roth by $800.", "But if your retirement rate is 32%, traditional leaves just $27,200.", "Now Roth wins by $3,200.", "And if your rate stays at 24%, both leave you $30,400.", "So ask yourself three questions.", "Am I in my peak earning years, or is my income temporarily low?", "Do I expect my tax rate to be higher or lower in retirement?", "Do I need the deduction now, or can I pay the tax today?", "Higher rate now usually favors traditional.", "Higher rate later usually favors Roth.", "And if you're unsure, you can split contributions between both.", "That's tax diversification.", "Do your own research, especially if you're near retirement.", "Which one are you using right now, Roth or traditional?", "If you're looking to grow your net worth, follow me."], "words": 267, "seconds": 79.0, "inside": true, "tools": 6, "cost": 0.065233, "took": 49.7, "sources": ["https://www.irs.gov/retirement-plans/roth-acct-in-your-retirement-plan", "https://www.irs.gov/retirement-plans/retirement-plans-faqs-on-designated-roth-accounts"], "work": {"queries": ["site:irs.gov Roth 401(k) traditional 401(k) contributions pre tax after tax qualified distributions ordinary income", "site:irs.gov 401(k) contribution limit 2025 Roth traditional combined elective deferrals", "site:irs.gov retirement plans FAQs designated Roth accounts qualified distributions five year 59 1/2"], "pages_read": 2, "pages_failed": 0, "requests": 3, "retried": false}}]}, {"title": "This is how robots learn to walk before they exist", "topic": "How humanoid and legged robots are trained in physics simulation through trial and error before the skill is transferred to a real machine. The viewer should understand why simulation makes training faster and what makes the jump to the real world hard.", "target": [40, 60], "niche": "technology and AI", "scripts": [{"name": "Claude Fable 5.2", "size": "flagship", "ok": true, "lines": ["This robot learned to walk like a human without taking a single real step.", "This is Figure 02, and its entire walk was learned inside a physics simulator.", "Think of it like a video game with real-world physics.", "Inside it, thousands of virtual copies of this robot practice at the same time.", "It's trial and error, and they're rewarded for moving more like a person.", "Heel strikes, toe-offs, even the arm swing.", "And the crazy part is the speed.", "They simulate years of walking data in just a few hours.", "On a real robot, that's slow, expensive, and sometimes dangerous.", "But here's the hard part.", "A simulation is only an approximation of the real world.", "Real motors lag, floors get slippery, and no two robots are exactly alike.", "So Figure gives every virtual robot slightly different physics, then trips and shoves them constantly.", "That way, the real world just feels like one more level of the game.", "And it worked.", "These are ten real robots running the exact same AI with zero tweaks.", "It sounds crazy now, but in a few years, most robots will learn their skills before the real machine even switches on."], "words": 195, "seconds": 55.4, "inside": true, "tools": 9, "cost": 0.627072, "took": 133.1, "sources": ["https://www.figure.ai/news/reinforcement-learning-walking", "https://www.3genrobotics.com/blogs/understanding-sim-to-real-gap-robotics", "https://www.popsci.com/technology/figure-humanoid-robot-walking-video/"], "work": {"queries": ["Figure learned natural walking reinforcement learning simulation thousands of virtual humanoids years of data in hours", "Learning to Walk in Minutes Using Massively Parallel Deep Reinforcement Learning ANYmal thousands of robots in parallel Isaac Gym", "sim-to-real gap domain randomization legged robots explained friction motors why transfer is hard"], "pages_read": 3, "pages_failed": 1, "requests": 4, "retried": false}}, {"name": "Claude Haiku 5.5", "size": "small", "ok": true, "lines": ["This robot learned to walk in a world that doesn't exist.", "Researchers at ETH Zurich trained a four-legged robot inside a physics simulator.", "The crazy part: they ran thousands of virtual copies at once on one GPU.", "Each one trips, falls, resets, and tries again.", "Steps that follow the commanded speed earn points.", "Flat ground took under four minutes. Uneven ground took about twenty.", "Then the trained brain went into the real robot, and it walked.", "The wildest part is what the simulator gets wrong.", "Friction is a guess, motors lag, and foot contact is really hard to model.", "So the engineers make the fake world messy on purpose.", "Every virtual robot gets different friction and random shoves.", "Reality just looks like one more version it already practiced.", "Grabbing things is still harder, because touching objects is where simulations break down.", "Robots now get their basic moves in a virtual gym before they touch the real ground.", "In a few years, I think every new humanoid will learn to walk this way first. Follow for more tech, AI and robotics stories."], "words": 181, "seconds": 51.4, "inside": true, "tools": 8, "cost": 0.010255, "took": 45.3, "sources": ["https://arxiv.org/abs/2109.11978", "https://ar5iv.labs.arxiv.org/html/2109.11978", "https://www.figure.ai/news/reinforcement-learning-walking", "https://www.humanoidsdaily.com/dictionary/sim-to-real"], "work": {"queries": ["robot learns to walk in simulation sim-to-real transfer reinforcement learning", "Learning to walk in minutes using massively parallel deep reinforcement learning Isaac Gym", "Hwangbo 2019 Science Robotics learning agile and dynamic motor skills legged robots ANYmal simulation"], "pages_read": 4, "pages_failed": 0, "requests": 5, "retried": false}}, {"name": "GPT-6.2 Astra", "size": "flagship", "ok": true, "lines": ["This robot learned to walk on flat ground in under four minutes, and it didn’t even need its real legs.", "See all those little guys on the screen?", "Those are four thousand virtual copies of a four-legged robot called ANYmal, all running on a single graphics chip.", "Think of it like a video game where all the players share one brain.", "Each copy tries moving its legs a little differently.", "It gets points for walking at the right speed, loses points for banging a knee, and if it lands on its belly, it resets.", "So one AI learns from four thousand attempts at the same time.", "Even on uneven ground with stairs, training took about twenty minutes.", "But here’s the hard part.", "A foot that grips the floor in the simulation might slip in the real world.", "So the researchers change how slippery the virtual ground is.", "They even give these guys a shove every ten seconds so they learn to keep their balance.", "Then they load that same AI onto the real robot and test it.", "And that’s the wild part. This robot can get better at climbing stairs without changing a thing about its legs.", "It just gets a software update."], "words": 203, "seconds": 57.7, "inside": true, "tools": 4, "cost": 0.157991, "took": 40.9, "sources": ["https://arxiv.org/html/2109.11978v3", "https://www.anybotics.com/news/superior-robot-mobility-where-ai-meets-the-real-world/"], "work": {"queries": ["legged robots ANYmal ETH learning to walk in minutes 4096 robots simulation transfer real world friction ETH gym falls reward"], "pages_read": 2, "pages_failed": 0, "requests": 4, "retried": false}}, {"name": "GPT-6 Luna", "size": "small", "ok": true, "lines": ["This humanoid learned to walk in a world that doesn't exist.", "Before testing the skill on the real Figure 02, Figure trained its walking controller in a physics simulator.", "Think video game, except every stumble teaches the AI how to adjust its next step.", "It tries movements, gets rewarded for walking more like a human, and learns through trial and error.", "The crazy part is they ran thousands of virtual robots in parallel, simulating years of walking in just a few hours.", "And they didn't all get perfect conditions.", "The simulation varied the terrain and the robot's physical properties, and threw in trips, slips and shoves.", "That way, the robot isn't just learning to walk down one clean virtual hallway.", "But the real world is never a perfect copy of a simulator.", "Motors and surfaces don't behave exactly like the model, so a skill that works in simulation can stumble on the actual floor.", "Figure says it bridges that gap by mixing up the simulations and using fast torque feedback on the real robot.", "This is how robots can get years of practice before taking those steps in the real world.", "And I think simulation is about to become the training gym for every robot."], "words": 205, "seconds": 58.2, "inside": true, "tools": 4, "cost": 0.001446, "took": 16.4, "sources": ["https://www.figure.ai/news/reinforcement-learning-walking"], "work": {"queries": ["humanoid robots learn to walk simulation sim to real reinforcement learning NVIDIA Isaac Lab official"], "pages_read": 1, "pages_failed": 0, "requests": 3, "retried": false}}, {"name": "Gemini 4 Neon", "size": "flagship", "ok": true, "lines": ["These robots are learning how to walk before they even exist.", "What you're looking at is thousands of virtual robots training inside a physics simulator.", "See, walking on legs is basically controlled falling.", "Instead of hand-tuning every step, engineers let them learn by trial and error, like a video game.", "Every time one falls, it resets and tries again, earning rewards for staying upright.", "And the crazy part is the speed.", "With thousands of clones running on GPUs, a four-legged robot learns to walk in minutes.", "Humanoids like Figure 02 pack years of walking into a few hours.", "Of course, there's one big catch.", "Real motors lag, sensors are noisy, and every floor has different grip.", "So a robot trained in a perfect simulation fails immediately on real hardware.", "Here's the wildest part.", "Engineers intentionally make the simulation chaotic.", "They randomize friction and weight, and constantly shove the robots.", "Survive that, and you drop the AI brain onto a real robot and it just walks.", "In a few years, almost every skill a robot learns will happen in simulation first.", "Follow for more stories on tech, AI, and robotics."], "words": 189, "seconds": 53.7, "inside": true, "tools": 13, "cost": 0.476436, "took": 213.5, "sources": ["https://arxiv.org/html/2109.11978v3", "https://www.figure.ai/news/reinforcement-learning-walking", "https://www.rob.co/resources/knowledge/blog/legged-robots", "https://claru.ai/glossary/sim-to-real-gap"], "work": {"queries": ["NVIDIA Isaac Gym OR Isaac Lab humanoid robot learn to walk simulation minutes hours parallel", "\"sim-to-real\" legged robot walking reinforcement learning domain randomization friction gravity", "ETH Zurich ANYmal OR Unitree learn to walk in minutes simulation GPU reinforcement learning", "NVIDIA blog humanoid robot simulation \"years of\" OR \"thousands of\" walking Isaac Lab", "\"sim-to-real gap\" robot walking physics simulation explained friction latency domain randomization", "humanoid robot learn to walk simulation \"Isaac Gym\" OR \"Isaac Lab\" \"hours\" OR \"minutes\" \"thousands\"", "\"Unitree\" OR \"Agility\" OR \"Figure\" humanoid robot trained in simulation before walking real world"], "pages_read": 4, "pages_failed": 0, "requests": 6, "retried": false}}, {"name": "Gemini 3.8 Flash", "size": "small", "ok": true, "lines": ["This is how advanced robots learn to walk before they even exist.", "If you taught a real robot through trial and error, it would constantly fall and break.", "So companies like Figure and Nvidia train them inside a physics simulator.", "What you're looking at is thousands of virtual robots learning at the exact same time.", "They trip, slip, and fall millions of times.", "And because it's running on GPUs, you can simulate years of walking data in just a few hours.", "Now, the wildest part is making the jump into the real world.", "Roboticists call this the sim-to-real gap.", "Simulated physics is only an approximation, but real floors have random friction and motor delays.", "To fix that, engineers use something called domain randomization.", "Think of it like throwing constant digital curveballs.", "The simulator randomizes ground friction, adds sensor noise, and even shoves the robots while they walk.", "So when that AI is loaded onto a real machine, it walks on day one with zero extra tuning.", "That's the big takeaway.", "In just a few years, humanoid robots will show up with decades of practice before taking their very first real step.", "Follow for more stories like this about tech, AI, and robotics."], "words": 202, "seconds": 57.4, "inside": true, "tools": 14, "cost": 0.130514, "took": 162.5, "sources": ["https://www.figure.ai/news/reinforcement-learning-walking", "https://developer.nvidia.com/blog/closing-the-sim-to-real-gap-training-spot-quadruped-locomotion-with-nvidia-isaac-lab/", "https://arxiv.org/html/2109.11978v2", "https://www.technologyreview.com/2024/04/30/1091907/the-robot-race-is-fueling-a-fight-for-training-data/"], "work": {"queries": ["robots learn to walk in simulation reinforcement learning sim to real Isaac Gym", "NVIDIA Isaac Gym \"learning to walk in minutes\" simulation real world", "site:spectrum.ieee.org robot learn to walk simulation reinforcement learning \"sim-to-real\"", "\"sim-to-real\" robot learn to walk simulation \"domain randomization\" Isaac Gym", "\"sim-to-real\" humanoid robot simulation walking reinforcement learning \"thousands\"", "\"Berkeley\" humanoid robot \"reinforcement learning\" simulation walk \"sim-to-real\"", "\"sim-to-real\" humanoid robots simulation walk site:technologyreview.com", "site:technologyreview.com \"sim-to-real\" robot simulation", "\"Learning to Walk in Minutes Using Massively Parallel Deep Reinforcement Learning\" Rudin Hoeller"], "pages_read": 4, "pages_failed": 1, "requests": 15, "retried": false}}, {"name": "Kimi K3.1 Pro", "size": "open", "ok": true, "lines": ["These humanoids learn to walk before touching the real world.", "And the crazy part is, years of practice take just a few hours.", "This is Figure's training ground for Figure 02.", "Inside one physics simulator, thousands of virtual robots learn at once.", "It's like a video game with infinite lives, except the high score is walking.", "The AI tries a movement, gets rewarded for copying a human gait, then adjusts and tries again.", "But here's the hardest part.", "A simulated robot only approximates a real one.", "So Figure makes the simulation messy.", "Every robot gets different physical properties and faces changing terrain, slips and shoves.", "The AI can't memorize one perfect world.", "It has to learn walking that works outside it.", "And it works.", "The same controller transferred to real robots with no extra tuning.", "Figure even ran it on 10 robots with zero changes.", "Soon, a robot's first real step could have years of practice behind it.", "Follow for more tech, AI and robotics stories."], "words": 166, "seconds": 47.2, "inside": true, "tools": 6, "cost": 0.068768, "took": 78.3, "sources": ["https://www.figure.ai/news/reinforcement-learning-walking"], "work": {"queries": ["robot learned walk simulation thousands parallel domain randomization sim to real humanoid training reinforcement learning primary source", "NVIDIA Isaac Lab humanoid robot simulation thousands environments sim to real domain randomization walking", "ETH ANYmal learned walk simulation 11 minutes sim to real domain randomization Nature"], "pages_read": 1, "pages_failed": 1, "requests": 3, "retried": false}}]}, {"title": "Are seed oils actually that bad for you?", "topic": "Take the common claim that seed oils are toxic or inflammatory, explain where the idea comes from and what controlled research on these oils and health outcomes shows. The viewer should understand the difference between the oil itself and the foods it usually comes in, and how much the amount matters.", "target": [70, 90], "niche": "fitness and exercise science", "scripts": [{"name": "Claude Fable 5.2", "size": "flagship", "ok": true, "lines": ["By now, I think everyone agrees that seed oils are basically poison.", "Canola, soybean, sunflower, the so-called hateful eight.", "But what if the oil was never the problem?", "Here's where the fear comes from.", "Seed oils are high in an omega-6 fat called linoleic acid.", "And your body can turn that into arachidonic acid, which it uses to make inflammatory compounds.", "So more seed oil means more inflammation, right?", "On paper, sure.", "But then researchers actually tested it.", "A review of 15 randomized controlled trials looked at healthy people eating more linoleic acid.", "And not one of them found a significant increase in inflammatory markers like C-reactive protein.", "Then you look at heart disease, and it gets even weirder.", "An analysis of 13 studies, following over 310,000 people, found that the ones eating the most linoleic acid had a 15% lower risk of coronary heart disease.", "And a 21% lower risk of dying from it.", "Even swapping just 5% of your calories from saturated fat to linoleic acid was linked to a 9% lower risk.", "On a 2,000 calorie diet, that's about 100 calories a day.", "So why does everyone feel amazing when they cut seed oils out?", "Because of where they're hiding.", "Fries, chips, cake, frozen dinners.", "Foods that are loaded with calories, added sugar and sodium.", "So if you quit seed oils by quitting fast food and chips, of course you feel better.", "You quit fast food and chips.", "Now, I'm not saying go chug a bottle of canola oil.", "One tablespoon is still 124 calories of pure fat, and that adds up fast.", "The dose still makes the poison.", "But it was never really about what your food is cooked in.", "It's about what food you're cooking."], "words": 290, "seconds": 87.9, "inside": true, "tools": 11, "cost": 0.802024, "took": 77.3, "sources": ["https://pubmed.ncbi.nlm.nih.gov/22889633/", "https://pubmed.ncbi.nlm.nih.gov/25161045/", "https://publichealth.jhu.edu/2025/the-evidence-behind-seed-oils-health-effects", "https://www.heart.org/en/news/2024/08/20/theres-no-reason-to-avoid-seed-oils-and-plenty-of-reasons-to-eat-them", "https://med.stanford.edu/news/insights/2025/03/5-things-to-know-about-the-effects-of-seed-oils-on-health.html", "https://www.verywellfit.com/why-canola-oil-is-a-safe-and-healthy-choice-2506062"], "work": {"queries": ["Johnson Fritsche 2012 systematic review linoleic acid inflammatory markers randomized controlled trials healthy adults", "Farvid 2014 dietary linoleic acid coronary heart disease risk meta-analysis prospective cohort 15% lower", "seed oils inflammatory claim omega-6 linoleic acid arachidonic acid where the idea comes from Harvard OR Stanford OR Johns Hopkins", "American Heart Association seed oils ultra-processed foods \"seed oils\" not the problem omega-6 science", "canola oil one tablespoon calories 124 grams fat nutrition facts"], "pages_read": 6, "pages_failed": 0, "requests": 5, "retried": false}}, {"name": "Claude Haiku 5.5", "size": "small", "ok": true, "lines": ["Seed oils are toxic. You've seen that claim a hundred times by now.", "So where's it coming from?", "Canola, corn, soybean, sunflower, and safflower got lumped together as the \"hateful eight,\" and the scare blew up after a 2020 podcast with Paul Saladino.", "Now the research.", "In 2019, researchers pooled data from over 68,000 people across 30 studies.", "The people with the most linoleic acid in their blood, the main fat in these oils, had a lower risk of heart disease and stroke.", "Across the range people actually eat in, that's about 7% lower risk of heart disease and stroke, and about 22% lower risk of dying from cardiovascular disease.", "That's an association, so it's not proof.", "On inflammation, a review of 15 controlled trials in healthy people found virtually no evidence that adding linoleic acid raised inflammatory markers.", "Now, the one study everyone brings up is the Sydney Diet Heart Study.", "In the late 60s and 70s, about 450 men who'd recently had a heart event swapped saturated fat for safflower oil.", "A 2013 reanalysis found the safflower group died more often, 17.6% versus 11.8%.", "An updated meta-analysis found no clear cardiovascular benefit.", "So that's one old trial worth knowing about, not a reason to call the oil poison.", "And the oil isn't the same as what it's in.", "Most of the blame belongs to ultraprocessed food, which is usually high in salt, sugar, and additives.", "Swap butter, lard, or tallow for canola or sunflower oil at home, and your LDL cholesterol goes down compared to those.", "Not toxic doesn't automatically make it healthy, and the dose still matters.", "A splash in your pan isn't the same as fried food every day.", "So the question was never whether seed oil is poison.", "It's whether it's replacing saturated fat, or hiding inside a bag of chips."], "words": 306, "seconds": 92.7, "inside": false, "tools": 15, "cost": 0.016647, "took": 98.8, "sources": ["https://pubmed.ncbi.nlm.nih.gov/30971107/", "https://publichealth.jhu.edu/2025/the-evidence-behind-seed-oils-health-effects", "https://pubmed.ncbi.nlm.nih.gov/22889633/", "https://pubmed.ncbi.nlm.nih.gov/23386268/", "https://en.wikipedia.org/wiki/Seed_oil_misinformation"], "work": {"queries": ["seed oils linoleic acid cardiovascular disease mortality Marklund 2019 Circulation pooled analysis", "seed oils inflammation claim evidence linoleic acid meta-analysis inflammatory markers", "Minnesota Coronary Experiment reanalysis Ramsden linoleic acid death rate", "Johnson Fritsche 2012 effect of dietary linoleic acid on markers of inflammation systematic review randomized trials", "Sydney Diet Heart Study safflower oil linoleic acid higher mortality Ramsden 2013 BMJ", "linoleic acid conversion to arachidonic acid percent of intake study does not increase arachidonic acid", "where did the seed oils are toxic claim come from history viral social media origin evidence review"], "pages_read": 5, "pages_failed": 1, "requests": 6, "retried": false}}, {"name": "GPT-6.2 Astra", "size": "flagship", "ok": true, "lines": ["If seed oils are toxic because they're in french fries, what happens when I use the same oil to cook my broccoli?", "Did I just ruin the broccoli?", "Here's where the inflammation claim comes from.", "Canola and soybean oil both contain an omega-6 fat called linoleic acid.", "Your body can use it to make molecules that turn inflammation up.", "So eating more of it should mean more inflammation, right?", "Well, a review of 30 controlled trials looked at what actually showed up in people's blood when they ate more linoleic acid.", "Overall, the markers you'd expect to go up with inflammation didn't.", "And when researchers compared cooking fats, they found that using oils like sunflower oil instead of butter can actually lower your LDL cholesterol.", "The key words there are “instead of.”", "Keeping the butter and pouring oil on top of it is a different deal, especially if you're trying to lose fat.", "One tablespoon of canola oil has about 120 calories.", "If your little drizzle is actually two tablespoons, that's closer to 250.", "Now, I'm not calling fries a health food just because the oil isn't poison.", "But if cutting out seed oils means you stop eating chips and fries, you've changed a lot more than one ingredient.", "I'd worry less about which seed it came from and more about how much you're using, what you're cooking, and what it's replacing."], "words": 232, "seconds": 70.3, "inside": true, "tools": 13, "cost": 0.355486, "took": 86.5, "sources": ["https://www.harvardhealth.org/heart-health/seeding-doubt-the-truth-about-cooking-oils", "https://pubmed.ncbi.nlm.nih.gov/28752873/", "https://pmc.ncbi.nlm.nih.gov/articles/PMC6121943/", "https://www.urmc.rochester.edu/encyclopedia/content?contenttypeid=76&contentid=04582-1"], "work": {"queries": ["seed oils linoleic acid inflammation systematic review 15 randomized controlled trials healthier than butter LDL oil trial safflower tablespoon 120 calories seed oils Harvard Cleveland Clinic", "controlled trial butter versus corn oil LDL trial randomized corn oil vs butter percent tablespoon unsaturated oil LDL 2018 network meta analysis seed oils", "NIH Hall ultra processed foods controlled trial 500 calories per day 2 weeks weight gain seed oils processed food not isolate", "canola oil 120 calories per tablespoon cooking oil 120 calories site:edu or site:heart.org or USDA canola oil calories tablespoon", "calories 1 tablespoon canola oil 124 medical center nutrition facts canola oil tablespoon", "systematic review meta-analysis dietary linoleic acid intake inflammatory markers 30 randomized controlled studies high increase CRP Su 2017 PubMed"], "pages_read": 4, "pages_failed": 0, "requests": 8, "retried": false}}, {"name": "GPT-6 Luna", "size": "small", "ok": true, "lines": ["Seed oils are toxic and inflammatory.", "Okay, but is that the canola talking, or TikTok?", "Most of this panic comes from omega-6 linoleic acid, common in seed oils.", "Your body can turn it into arachidonic acid, used to make some inflammatory signals.", "Sounds scary, until you test it in people.", "A review of 15 controlled trials found no increase in CRP or a long list of inflammatory markers when people ate more linoleic acid.", "That’s not proof every dose is magic or harmless forever; it means the scary claim isn’t showing up in controlled research.", "For actual heart outcomes, a Cochrane review of 19 trials and 6,461 adults found no clear reduction in overall cardiovascular events from more omega-6, though cholesterol fell.", "So seed oil isn’t a superhero.", "But “toxic” isn’t what the evidence says.", "Also, the oil isn’t the same thing as the food it comes in.", "Seed oil in a pan isn’t the same package as chips or fast food, which bring calories and all their other ingredients.", "Cutting those foods may help, but it doesn’t prove the oil was the villain.", "And amount still matters: one tablespoon of canola oil is about 120 calories, so free-pouring adds up if you’re trying to lose fat.", "I’m not calling something healthy just because it isn’t toxic.", "Use an oil you like, watch portions if calories matter, and look at the whole diet.", "The question isn’t “is seed oil poison?”", "It’s “what food is it in, how much are you having, and what is it replacing?”"], "words": 256, "seconds": 77.6, "inside": true, "tools": 17, "cost": 0.005801, "took": 61.9, "sources": ["https://pubmed.ncbi.nlm.nih.gov/22889633/", "https://www.cochrane.org/evidence/CD011094_omega-6-fats-prevent-and-treat-heart-and-circulatory-diseases", "https://med.stanford.edu/news/insights/2025/03/5-things-to-know-about-the-effects-of-seed-oils-on-health.html", "https://www.harvardhealth.org/healthy-aging-and-longevity/expand-your-healthy-cooking-oil-choices"], "work": {"queries": ["seed oils inflammation randomized controlled trial linoleic acid inflammatory markers systematic review human trials", "American Heart Association dietary fats seed oils linoleic acid cardiovascular randomized trials", "seed oils health claim ultra processed foods confounding dietary patterns controlled trial", "Cochrane omega-6 fats cardiovascular outcomes randomized controlled trials linoleic acid", "seed oils smoke point oxidation cooking health evidence review", "USDA FoodData Central vegetable oil 1 tablespoon 120 calories", "controlled feeding randomized trial ultra processed diet calorie intake Hall 2019 seed oils calories weight gain", "Harvard seed oils calories tablespoon 120 calorie cooking oil", "randomized controlled trials linoleic acid inflammation 15 trials no effect CRP IL-6 2012 systematic review"], "pages_read": 4, "pages_failed": 0, "requests": 5, "retried": false}}, {"name": "Gemini 4 Neon", "size": "flagship", "ok": true, "lines": ["By now, everyone's heard that seed oils are basically poison.", "Canola, soybean, sunflower, all supposedly flooding your body with inflammation.", "Well, not quite.", "Here's where that claim actually comes from.", "Seed oils are high in an omega-6 fat called linoleic acid.", "On paper, your body converts it into arachidonic acid, which helps trigger inflammation.", "Sounds scary, right?", "Except in human trials, increasing it up to six times didn't significantly change arachidonic acid levels.", "Even cutting it by 90% didn't move them.", "And across 30 randomized trials on nearly 1,400 adults, higher linoleic acid didn't raise blood inflammation markers.", "In fact, across over 310,000 people, swapping 5% of daily calories from saturated fat to linoleic acid", "was linked to a 9% lower risk of heart disease.", "On a 2,000-calorie diet, that's less than one tablespoon of oil.", "Now, just because it isn't toxic doesn't mean I'm calling canola oil a health food.", "Here's where it gets tricky.", "Most people aren't getting seed oils from cooking dinner at home.", "They're getting them from fast food and ultra-processed snacks packed with sugar, sodium, and extra calories.", "And the amount still matters.", "One tablespoon of canola oil has 124 calories, so pouring it freely wrecks a fat-loss phase fast.", "Plus, huge spikes in intake or repeatedly reusing oil at high heat is where things can actually backfire.", "So it depends, and the dose is what makes the poison.", "The point is, seed oils were never the problem, the ultra-processed diet they're hiding in is."], "words": 250, "seconds": 75.8, "inside": true, "tools": 20, "cost": 0.49667, "took": 262.0, "sources": ["https://www.heart.org/en/news/2024/08/20/theres-no-reason-to-avoid-seed-oils-and-plenty-of-reasons-to-eat-them", "https://pubmed.ncbi.nlm.nih.gov/21663641/", "https://pubmed.ncbi.nlm.nih.gov/28752873/", "https://pubmed.ncbi.nlm.nih.gov/25161045/", "https://health.clevelandclinic.org/seed-oils-are-they-actually-toxic", "https://www.healthline.com/nutrition/is-canola-oil-healthy"], "work": {"queries": ["Harvard seed oils linoleic acid inflammation heart disease", "linoleic acid conversion to arachidonic acid percentage human study Rett Whelan", "Johnson Fritsche 2012 linoleic acid inflammation randomized controlled trials", "AHA seed oils American Heart Association ultra-processed foods", "\"0.3%\" \"0.6%\" linoleic acid arachidonic acid Whelan", "Farvid 2014 linoleic acid coronary heart disease 5% energy Harvard", "calories in one tablespoon vegetable oil canola oil USDA Healthline", "seed oils repeatedly heated frying oxidation aldehydes Harvard OR Cleveland Clinic OR Hopkins", "Su 2017 linoleic acid inflammatory markers meta-analysis randomized controlled trials PubMed", "butter plant-based oils JAMA Internal Medicine 2025 mortality Harvard"], "pages_read": 6, "pages_failed": 3, "requests": 7, "retried": false}}, {"name": "Gemini 3.8 Flash", "size": "small", "ok": true, "lines": ["By now, you've probably heard that seed oils are basically toxic sludge.", "That cooking with canola or soybean oil quietly destroys your health.", "The theory actually sounds convincing at first.", "Seed oils are high in an omega-6 fat called linoleic acid.", "The claim is that your body converts it into arachidonic acid, which drives up inflammation.", "Sounds scary, right?", "Except human clinical trials tell a completely different story.", "In human trials, increasing linoleic acid by up to six times", "didn't significantly increase arachidonic acid in human tissues.", "And across fifteen randomized controlled trials,", "varying linoleic acid had zero effect on inflammatory markers like CRP.", "In fact, across thirty studies following over sixty-eight thousand people,", "higher levels were linked to a lower risk of stroke,", "and a thirty-five percent lower risk of type two diabetes.", "So why does everyone blame seed oils for everything?", "On average, Americans consume over forty grams of vegetable oil a day.", "That's about three tablespoons.", "And almost none of that comes from sautéing vegetables at home.", "More than half the calories Americans eat at home come from ultra-processed food.", "Seed oils hide in chips, cookies, and fryers where oil gets repeatedly reheated.", "Those foods are packed with sugar, sodium, and tons of extra calories.", "Eating that all day will wreck your health, but not because the oil is toxic.", "Now, I'm not calling seed oils healthy just because they aren't toxic.", "It depends, and the dose makes the poison.", "Your problem was never the tablespoon of oil in your skillet.", "It was the ultra-processed diet it was riding in on."], "words": 264, "seconds": 80.0, "inside": true, "tools": 8, "cost": 0.133093, "took": 151.7, "sources": ["https://publichealth.jhu.edu/2025/the-evidence-behind-seed-oils-health-effects", "https://pmc.ncbi.nlm.nih.gov/articles/PMC6179509/", "https://pmc.ncbi.nlm.nih.gov/articles/PMC3132704/", "https://www.harvardhealth.org/heart-health/seeding-doubt-the-truth-about-cooking-oils"], "work": {"queries": ["seed oils linoleic acid inflammation randomized controlled trials meta-analysis", "site:health.harvard.edu \"seed oils\" OR \"linoleic acid\"", "\"linoleic acid\" conversion to \"arachidonic acid\" \"percent\" OR \"percentage\" human"], "pages_read": 4, "pages_failed": 0, "requests": 9, "retried": false}}, {"name": "Kimi K3.1 Pro", "size": "open", "ok": true, "lines": ["Seed oils are toxic, inflammatory, and apparently responsible for everything except your bad squat depth.", "The theory sounds scientific.", "Seed oils contain linoleic acid, an omega-6 fat your body can turn into arachidonic acid.", "That's used to make inflammatory compounds.", "So eat sunflower oil, become inflammation.", "Except your body keeps arachidonic acid levels relatively stable.", "A review of 15 randomized controlled trials found no significant effect on CRP or other inflammatory markers.", "Those trials were small and lasted just two to 40 days.", "So no, that doesn't prove unlimited oil is harmless forever.", "But “theoretically possible” isn't evidence that normal amounts are toxic.", "Controlled trials also show that replacing saturated fat with linoleic acid lowers LDL cholesterol.", "Now for what the panic leaves out.", "Seed oils show up in ultra-processed foods like chips and frozen meals.", "Those foods often come with added salt, sugar, and other stuff worth paying attention to.", "Blaming the oil for the entire food is like blaming the lettuce for what's inside a burger.", "And not being toxic doesn't automatically make something healthy.", "The amount matters too.", "For scale, the American Heart Association recommends 5 to 10% of calories from omega-6 fats.", "On a 2,000-calorie diet, that's about 11 to 22 grams.", "That's roughly one and a half to three tablespoons of soybean or corn oil's worth of linoleic acid.", "Across your whole diet, not an oil-drinking target.", "The question isn't whether an ingredient sounds scary.", "It's what you're eating, what it replaces, and how much."], "words": 250, "seconds": 75.8, "inside": true, "tools": 7, "cost": 0.096054, "took": 70.0, "sources": ["https://pmc.ncbi.nlm.nih.gov/articles/PMC6179509/", "https://www.eufic.org/en/misinformation/article/do-seed-oils-cause-inflammation", "https://nutritionsource.hsph.harvard.edu/2014/11/05/dietary-linoleic-acid-and-risk-of-coronary-heart-disease/", "https://publichealth.jhu.edu/2025/the-evidence-behind-seed-oils-health-effects"], "work": {"queries": ["systematic review randomized controlled trials linoleic acid inflammatory markers seed oils omega 6 arachidonic acid inflammation", "American Heart Association omega 6 linoleic acid cardiovascular disease randomized trials 5 10 percent energy advisory", "seed oils ultra processed foods health outcomes oil itself foods Harvard linoleic acid LDL cholesterol"], "pages_read": 4, "pages_failed": 0, "requests": 3, "retried": false}}]}]}</script>
+<script>
+(function () {
+  "use strict";
+  var D = JSON.parse(document.getElementById("data").textContent);
+  var M = D.models;
+  var SIZE = { flagship: { label: "Flagship", color: "var(--s1)" }, small: { label: "Small", color: "var(--s2)" }, open: { label: "Open-weight", color: "var(--s3)" } };
+  var SUBS = [["voice", "Voice"], ["hook", "Hook"], ["substance", "Substance"], ["pacing", "Pacing"], ["originality", "Originality"]];
+  var $ = function (id) { return document.getElementById(id); };
+
+  function el(tag, attrs, text) {
+    var n = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === "class") n.className = attrs[k]; else if (k === "style") n.style.cssText = attrs[k]; else n.setAttribute(k, attrs[k]);
+    });
+    if (text !== undefined && text !== null) n.textContent = text;
+    return n;
+  }
+  function pct(x, d) { return (x * 100).toFixed(d === undefined ? 0 : d) + "%"; }
+  function money(x) { return x < 0.01 ? "under $0.01" : "$" + x.toFixed(2); }
+  function secs(x) { return x >= 90 ? Math.floor(x / 60) + "m " + String(Math.round(x % 60)).padStart(2, "0") + "s" : Math.round(x) + "s"; }
+  function by(key) { return M.slice().sort(function (a, b) { return (b[key] - a[key]) || ((b.overall || 0) - (a.overall || 0)); }); }
+  function mean(a) { return a.reduce(function (s, v) { return s + v; }, 0) / a.length; }
+
+  /* ---------- tooltip ---------- */
+  var tip = $("tip");
+  function bindTip(node, html) {
+    node.classList.add("hit"); node.tabIndex = 0;
+    function show(x, y) {
+      tip.innerHTML = html; tip.style.opacity = "1";
+      var w = tip.offsetWidth, h = tip.offsetHeight;
+      tip.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, x + 12)) + "px";
+      tip.style.top = Math.max(8, (y - h - 12 < 8 ? y + 16 : y - h - 12)) + "px";
+    }
+    node.addEventListener("mousemove", function (e) { show(e.clientX, e.clientY); });
+    node.addEventListener("mouseleave", function () { tip.style.opacity = "0"; });
+    node.addEventListener("focus", function () { var r = node.getBoundingClientRect(); show(r.left + r.width / 2, r.top); });
+    node.addEventListener("blur", function () { tip.style.opacity = "0"; });
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function nameCell(m) {
+    var d = el("div", { class: "name" }, m.name);
+    d.appendChild(el("small", null, m.lab + " · " + SIZE[m.size].label.toLowerCase()));
+    return d;
+  }
+  function gridlines(track, ticks, max) {
+    ticks.forEach(function (t, i) {
+      track.appendChild(el("div", { class: "gridline" + (i === 0 ? " base" : ""), style: "left:" + (t / max * 100) + "%" }));
+    });
+  }
+  function axisRow(ticks, max, fmt) {
+    var row = el("div", { class: "axis" }); row.appendChild(el("div"));
+    var t = el("div", { class: "ticks" });
+    ticks.forEach(function (v) { t.appendChild(el("span", { style: "left:" + (v / max * 100) + "%" }, fmt(v))); });
+    row.appendChild(t); return row;
+  }
+
+  /* ---------- header ---------- */
+  var HAS_ACC = M.every(function (m) { return m.accuracy != null; });
+  var HAS_SE = M.every(function (m) { return m.usable_se != null; });
+  var HAS_GAP = M.some(function (m) { return !!m.vs_leader; });
+  var COUNTS = M.every(function (m) { return m.usable_count != null && m.n != null; });
+  var FULL = M.every(function (m) { return m.by_niche && m.flags; });
+  var PER = COUNTS ? M[0].n : null;
+  function names(list) { return list.length < 2 ? list.join("") : list.slice(0, -1).join(", ") + " and " + list[list.length - 1]; }
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function top1(key, sign) { return M.slice().sort(function (a, b) { return (sign || 1) * (b[key] - a[key]); })[0]; }
+  $("status").textContent = "Results";
+  $("updated").textContent = "Updated " + D.updated;
+  ([D.creators + " creators", D.tasks + " tasks", M.length + " models", D.rated_scripts ? D.rated_scripts.toLocaleString() + " ratings" : "Prompt version " + D.prompt_version])
+    .forEach(function (t) { $("meta").appendChild(el("span", null, t)); });
+  var ranked = by("usable");
+  $("lede").textContent = "As of " + D.updated + ", " + ranked[0].name + " ranks first with a usable rate of " +
+      pct(ranked[0].usable) + ", followed by " + ranked[1].name + " (" + pct(ranked[1].usable) + ") and " + ranked[2].name + " (" + pct(ranked[2].usable) + ").";
+
+  /* ---------- ranked bars ---------- */
+  var METRICS = {
+    usable: { title: "Usable rate by model", sub: "Share of scripts the creator rated 3 or 4: would film as written or after small edits.", se: "usable_se" },
+    accuracy: { title: "Accuracy by model", sub: "Share of factual claims supported by the page the model cited.", se: "accuracy_se" }
+  };
+  if (!HAS_ACC) document.querySelector("#leaderboard .controls").hidden = true;
+  function rankRows(host, metric) {
+    var cfg = METRICS[metric], ticks = [0, 25, 50, 75, 100];
+    host.replaceChildren();
+    var rows = el("div", { class: "rows" });
+    by(metric).forEach(function (m, i) {
+      var row = el("div", { class: "row" }); row.appendChild(nameCell(m));
+      var track = el("div", { class: "track" }); gridlines(track, ticks, 100);
+      var v = m[metric], se = m[cfg.se], ci = se != null, lo = ci ? Math.max(0, v - se) : v, hi = ci ? Math.min(1, v + se) : v;
+      var count = !ci && metric === "usable" && COUNTS ? m.usable_count + " of " + m.n : "";
+      track.appendChild(el("div", { class: "bar", style: "width:" + (v * 100) + "%" }));
+      if (ci) track.appendChild(el("div", { class: "whisker", style: "left:" + (lo * 100) + "%;width:" + ((hi - lo) * 100) + "%" }));
+      var label = el("div", { class: "val", style: "left:" + (hi * 100) + "%" }, pct(v) + (count ? "  ·  " + count : ""));
+      if (hi > (count ? 0.72 : 0.9)) { label.style.left = "auto"; label.style.right = (100 - lo * 100) + "%"; label.style.paddingRight = "8px"; label.style.top = "-12px"; }
+      track.appendChild(label);
+      bindTip(track, "<b>" + esc(m.name) + "</b>" + cfg.title.replace(" by model", "") + ": " + pct(v, 1) +
+        (ci ? "<br>One standard error either side: " + pct(lo) + " to " + pct(hi) + "<br>Rank " + (i + 1) + " of " + M.length : count ? "<br>" + count + " scripts rated 3 or 4" : ""));
+      row.appendChild(track); rows.appendChild(row);
+    });
+    host.appendChild(rows); host.appendChild(axisRow(ticks, 100, function (v) { return v + "%"; }));
+  }
+  function drawRank(metric) { $("rankTitle").textContent = METRICS[metric].title; $("rankSub").textContent = METRICS[metric].sub; rankRows($("rankChart"), metric); }
+  document.querySelectorAll(".seg").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll(".seg").forEach(function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+      drawRank(btn.dataset.metric);
+    });
+  });
+  drawRank("usable");
+
+  /* ---------- leaderboard table ---------- */
+  (function () {
+    var HAS_AVG = M.every(function (m) { return m.overall != null; }), HAS_FILM = M.every(function (m) { return m.filmed != null; });
+    var cols = [["Rank", ""], ["Model", ""], ["Usable rate", "num"]];
+    if (HAS_AVG) cols.push(["Avg rating", "num"]);
+    if (HAS_FILM) cols.push(["Picked to film", "num"]);
+    if (HAS_ACC) cols.push(["Accuracy", "num"]);
+    cols = cols.concat([["Cost / script", "num"], ["Tool calls", "num"], ["Lines", "num"]]);
+    var t = $("board"), head = el("tr");
+    cols.forEach(function (h) { head.appendChild(el("th", h[1] ? { class: h[1] } : null, h[0])); });
+    var thead = el("thead"); thead.appendChild(head); t.appendChild(thead);
+    var body = el("tbody");
+    ranked.forEach(function (m, i) {
+      var tr = el("tr"); tr.appendChild(el("td", null, String(i + 1)));
+      var name = el("td", null, m.name); name.appendChild(el("span", { class: "tag" }, SIZE[m.size].label)); tr.appendChild(name);
+      tr.appendChild(el("td", { class: "num" }, m.usable_se != null ? pct(m.usable, 1) + " ±" + (m.usable_se * 100).toFixed(1)
+                                                              : pct(m.usable) + (COUNTS ? " (" + m.usable_count + " of " + m.n + ")" : "")));
+      if (HAS_AVG) tr.appendChild(el("td", { class: "num" }, m.overall.toFixed(2)));
+      if (HAS_FILM) tr.appendChild(el("td", { class: "num" }, String(m.filmed)));
+      if (HAS_ACC) tr.appendChild(el("td", { class: "num" }, pct(m.accuracy, 1)));
+      tr.appendChild(el("td", { class: "num" }, money(m.cost)));
+      tr.appendChild(el("td", { class: "num" }, m.tools.toFixed(1)));
+      tr.appendChild(el("td", { class: "num" }, m.lines == null ? "–" : String(Math.round(m.lines))));
+      body.appendChild(tr);
+    });
+    t.appendChild(body);
+    $("boardNote").textContent = (HAS_AVG ? "Avg rating is the creators' overall rating on the 1 to 4 scale. " : "") +
+      (HAS_FILM ? "Picked to film counts the pitches where a creator chose that model's script as the one they would shoot. " : "") +
+      "Cost, tool calls and lines per script are averages over " + Number(D.measured_scripts).toLocaleString() + " scripts.";
+  })();
+
+  /* ---------- takeaways ---------- */
+  (function () {
+    var top = ranked[0];
+    var flag = M.filter(function (m) { return m.size === "flagship"; }), small = M.filter(function (m) { return m.size === "small"; });
+    var fu = mean(flag.map(function (m) { return m.usable; })), su = mean(small.map(function (m) { return m.usable; }));
+    var fc = mean(flag.map(function (m) { return m.cost; })), sc = mean(small.map(function (m) { return m.cost; }));
+    var costText = " A flagship script costs " + money(fc) + " on average against " + money(sc) + " for a small model, about " + Math.round(fc / Math.max(sc, 0.0001)) + " times as much." + " The cost figures are measured.";
+    var subMeans = SUBS.map(function (s) { return [s[1], mean(M.map(function (m) { return m.sub[s[0]]; }))]; }).sort(function (a, b) { return b[1] - a[1]; });
+    var subItem = ["Models score highest on " + subMeans[0][0].toLowerCase() + " and lowest on " + subMeans[subMeans.length - 1][0].toLowerCase() + ".",
+                   " Averaged across models, " + subMeans[0][0].toLowerCase() + " scores " + subMeans[0][1].toFixed(2) + " out of 4 and " + subMeans[subMeans.length - 1][0].toLowerCase() + " " + subMeans[subMeans.length - 1][1].toFixed(2) + "."];
+    var labs = []; M.forEach(function (m) { if (labs.indexOf(m.lab) < 0) labs.push(m.lab); });
+    var pairs = labs.map(function (lab) {
+      var f = M.filter(function (m) { return m.lab === lab && m.size === "flagship"; })[0], s = M.filter(function (m) { return m.lab === lab && m.size === "small"; })[0];
+      return f && s ? { lab: lab, f: f, s: s } : null;
+    }).filter(Boolean);
+    var items, pair;
+      var behind = HAS_GAP ? ranked.slice(1).filter(function (m) { return m.vs_leader && m.vs_leader.separated; }) : [];
+      var tied = HAS_GAP ? ranked.slice(1).filter(function (m) { return m.vs_leader && !m.vs_leader.separated; })
+                         : ranked.slice(1).filter(function (m) { return top.usable - m.usable <= 0.08; });
+      var smallWins = pairs.filter(function (p) { return p.s.usable >= p.f.usable; });
+      pair = cap("flagships average " + pct(fu) + " usable and small models " + pct(su) + ". ") +
+        pairs.map(function (p) { return p.lab + ": " + p.f.name + " " + pct(p.f.usable) + ", " + p.s.name + " " + pct(p.s.usable); }).join("; ") + ". " +
+        (smallWins.length ? "The small model does at least as well in " + smallWins.length + " of " + pairs.length + " labs (" + names(smallWins.map(function (p) { return p.lab; })) + ")."
+                          : "The flagship is ahead in every lab.");
+      items = [
+        [top.name + " leads at " + pct(top.usable) + ".", " " + (HAS_GAP
+          ? (behind.length ? "Compared on the same creators and pitches, it is clearly ahead of " + names(behind.map(function (m) { return m.name; })) + ". " : "") +
+            (tied.length ? "Its lead over " + names(tied.map(function (m) { return m.name + " (" + Math.round(m.vs_leader.gap * 100) + " points)"; })) + " is within the margin of error, so " + (tied.length === 1 ? "that model is" : "those models are") + " not separated from it."
+                         : "Every other model is clearly behind it.")
+          : (tied.length ? names(tied.map(function (m) { return m.name; })) + " " + (tied.length === 1 ? "is" : "are") + " within 8 points of it." : "No other model is within 8 points of it."))],
+        ["Small models " + (Math.abs(fu - su) < 0.03 ? "match" : su > fu ? "beat" : "trail") + " flagships on average, but not in every lab.", " Flagships average " + pct(fu) + " usable and small models " + pct(su) + ". " +
+          (smallWins.length ? "The small model does at least as well as its flagship in " + smallWins.length + " of " + pairs.length + " labs." : "The flagship is ahead in all " + pairs.length + " labs.") + costText]
+      ];
+      if (HAS_GAP) {
+        var inRange = [top].concat(tied).sort(function (a, b) { return a.cost - b.cost; })[0];
+        if (inRange !== top) items.push([inRange.name + " is the cheapest model not separated from the leader.", " It costs " + money(inRange.cost) + " a script against " + money(top.cost) + " for " + top.name +
+          (inRange.cost_total != null ? ", or $" + Math.round(inRange.cost_total) + " against $" + Math.round(top.cost_total) + " for all " + D.tasks + " tasks" : "") + "."]);
+      }
+      if (HAS_ACC) {
+        var hiA = top1("accuracy"), loA = top1("accuracy", -1);
+        items.push(["Accuracy runs from " + pct(loA.accuracy) + " to " + pct(hiA.accuracy) + ".", " " + hiA.name + " is the most accurate and " + loA.name + " the least. " +
+          (hiA === top ? "The most usable model is also the most accurate." : "The most usable model, " + top.name + ", is not the most accurate at " + pct(top.accuracy) + ": creators approve scripts with errors they don't notice.")]);
+      }
+      items.push(subItem);
+      if (M.every(function (m) { return m.filmed != null; }) && D.none_filmed != null) {
+        var f1 = top1("filmed");
+        items.push(["Creators chose a script to film for " + (D.tasks - D.none_filmed) + " of " + D.tasks + " pitches.", " " + f1.name + " was picked most often, for " + f1.filmed + " pitches. For " + D.none_filmed + " pitches, no model produced a script the creator would film."]);
+      }
+    $("pairText").textContent = "Three labs are tested twice: once with their largest model and once with a small one that costs a fraction as much. " + pair;
+  })();
+
+  /* ---------- example tasks and scripts ---------- */
+  (function () {
+    var EX = D.examples || [], fig = $("examples");
+    if (!EX.length) { fig.hidden = true; return; }
+    var sel = $("exPitch"), tabsEl = $("exTabs"), panel = $("exPanel"), info = $("exInfo"), state = { pitch: 0, name: null };
+    function chip(text) { return el("span", { class: "chip" }, text); }
+    function draw(focus) {
+      var pitch = EX[state.pitch], at = Math.max(0, pitch.scripts.findIndex(function (s) { return s.name === state.name; }));
+      var s = pitch.scripts[at]; state.name = s.name;
+      info.replaceChildren(el("p", null, pitch.topic));
+      var meta = el("div", { class: "chips" });
+      meta.appendChild(chip("Target " + pitch.target[0] + "–" + pitch.target[1] + " seconds")); meta.appendChild(chip(pitch.niche));
+      info.appendChild(meta);
+      tabsEl.replaceChildren();
+      pitch.scripts.forEach(function (x, i) {
+        var tab = el("button", { class: "ex-tab", type: "button", role: "tab", "aria-selected": i === at ? "true" : "false", tabindex: i === at ? "0" : "-1" }, x.name);
+        tab.addEventListener("click", function () { state.name = x.name; draw(true); });
+        tabsEl.appendChild(tab);
+      });
+      panel.replaceChildren();
+      var facts = el("div", { class: "chips" });
+      if (s.words != null) facts.appendChild(chip(s.words + " words"));
+      facts.appendChild(chip(s.lines.length + " lines"));
+      if (s.seconds != null) facts.appendChild(chip("about " + Math.round(s.seconds) + " s" + (s.inside ? "" : ", outside target")));
+      if (s.tools != null) facts.appendChild(chip(s.tools + " tool calls"));
+      if (s.cost != null) facts.appendChild(chip(money(s.cost)));
+      if (s.took != null) facts.appendChild(chip(secs(s.took) + " to write"));
+      panel.appendChild(facts);
+      var w = s.work || {};
+      if (w.queries) {
+        var how = el("details"); how.appendChild(el("summary", null, "How it worked: " + w.queries.length + " searches, " + (w.pages_read || 0) + " pages read" + (w.pages_failed ? ", " + w.pages_failed + " failed to load" : "")));
+        var qs = el("ul"); w.queries.forEach(function (q) { qs.appendChild(el("li", null, "Searched: " + q)); }); how.appendChild(qs);
+        how.appendChild(el("p", { class: "small" }, "Model requests: " + (w.requests != null ? w.requests : "–") + (w.retried ? ". The reply needed one format retry." : ". No format retries.") + " Only the search queries and request counts are shown here; the model's reasoning is not published."));
+        panel.appendChild(how);
+      }
+      var body = el("div", { class: "ex-script" });
+      if (!s.ok || !s.lines.length) body.appendChild(el("p", null, "No script was returned for this pitch."));
+      s.lines.forEach(function (line) { body.appendChild(el("p", null, line)); });
+      panel.appendChild(body);
+      if (s.sources.length) {
+        var d = el("details"); d.appendChild(el("summary", null, "Pages it cited (" + s.sources.length + ")"));
+        s.sources.forEach(function (url) {
+          var a = el("a", null, url);
+          if (/^https?:\/\//i.test(url)) { a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer"; }
+          d.appendChild(a);
+        });
+        panel.appendChild(d);
+      }
+      if (focus) { var t = tabsEl.querySelectorAll(".ex-tab")[at]; if (t) t.focus(); }
+    }
+    EX.forEach(function (p, i) { var o = el("option", { value: String(i) }, p.title); sel.appendChild(o); });
+    sel.addEventListener("change", function () { state.pitch = Number(sel.value); draw(false); });
+    tabsEl.addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      var list = EX[state.pitch].scripts, at = list.findIndex(function (s) { return s.name === state.name; });
+      state.name = list[(at + (e.key === "ArrowRight" ? 1 : list.length - 1)) % list.length].name; draw(true); e.preventDefault();
+    });
+    draw(false);
+  })();
+
+  /* ---------- flagship vs small ---------- */
+  (function () {
+    var host = $("pairChart"), ticks = [0, 25, 50, 75, 100], labs = [];
+    M.forEach(function (m) { if (labs.indexOf(m.lab) < 0) labs.push(m.lab); });
+    ["flagship", "small", "open"].forEach(function (k) {
+      if (!M.some(function (m) { return m.size === k; })) return;
+      var s = el("span"); s.appendChild(el("i", { class: "sw", style: "background:" + SIZE[k].color })); s.appendChild(document.createTextNode(SIZE[k].label));
+      $("pairLegend").appendChild(s);
+    });
+    var rows = el("div", { class: "rows" });
+    labs.forEach(function (lab) {
+      var ms = M.filter(function (m) { return m.lab === lab; }).sort(function (a, b) { return a.size < b.size ? -1 : 1; });
+      var row = el("div", { class: "row" }), name = el("div", { class: "name" }, lab);
+      name.appendChild(el("small", null, ms.map(function (m) { return m.name + " " + money(m.cost); }).join(" · ")));
+      row.appendChild(name);
+      var track = el("div", { class: "track" }); gridlines(track, ticks, 100);
+      if (ms.length > 1) {
+        var lo = Math.min.apply(null, ms.map(function (m) { return m.usable; })), hi = Math.max.apply(null, ms.map(function (m) { return m.usable; }));
+        track.appendChild(el("div", { class: "link", style: "left:" + (lo * 100) + "%;width:" + ((hi - lo) * 100) + "%" }));
+      }
+      ms.forEach(function (m) {
+        var dot = el("div", { class: "dot", style: "left:" + (m.usable * 100) + "%;background:" + SIZE[m.size].color });
+        bindTip(dot, "<b>" + esc(m.name) + "</b>" + SIZE[m.size].label + "<br>Usable rate: " + pct(m.usable, 1) + "<br>Cost per script: " + money(m.cost));
+        track.appendChild(dot);
+      });
+      var best = ms.slice().sort(function (a, b) { return b.usable - a.usable; })[0];
+      track.appendChild(el("div", { class: "val", style: "left:calc(" + (best.usable * 100) + "% + 6px)" }, pct(best.usable)));
+      row.appendChild(track); rows.appendChild(row);
+    });
+    host.appendChild(rows); host.appendChild(axisRow(ticks, 100, function (v) { return v + "%"; }));
+  })();
+
+  /* ---------- scatter ---------- */
+  function drawScatter() {
+    var host = $("scatter"); host.replaceChildren();
+    var W = Math.max(300, host.clientWidth), H = Math.round(Math.min(420, Math.max(300, W * 0.55)));
+    var pad = { l: 46, r: 16, t: 14, b: 40 }, NS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(NS, "svg"); svg.setAttribute("viewBox", "0 0 " + W + " " + H); svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", "Scatter of usable rate against cost per script for " + M.length + " models");
+    function add(tag, attrs, text) { var n = document.createElementNS(NS, tag); Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); }); if (text != null) n.textContent = text; svg.appendChild(n); return n; }
+    var costs = M.map(function (m) { return Math.max(m.cost, 0.001); });
+    var x0 = Math.floor(Math.log10(Math.min.apply(null, costs))), x1 = Math.ceil(Math.log10(Math.max.apply(null, costs)));
+    if (x1 === x0) x1 = x0 + 1;
+    var ys = M.map(function (m) { return m.usable; }), y0 = Math.max(0, Math.floor((Math.min.apply(null, ys) - 0.05) * 10) / 10), y1 = Math.min(1, Math.ceil((Math.max.apply(null, ys) + 0.05) * 10) / 10);
+    function X(c) { return pad.l + (Math.log10(Math.max(c, 0.001)) - x0) / (x1 - x0) * (W - pad.l - pad.r); }
+    function Y(v) { return H - pad.b - (v - y0) / (y1 - y0) * (H - pad.t - pad.b); }
+    for (var e = x0; e <= x1; e++) {
+      var gx = X(Math.pow(10, e));
+      add("line", { x1: gx, x2: gx, y1: pad.t, y2: H - pad.b, stroke: "var(--grid)", "stroke-width": 1 });
+      add("text", { x: gx, y: H - pad.b + 16, "text-anchor": e === x0 ? "start" : e === x1 ? "end" : "middle" }, "$" + Math.pow(10, e).toFixed(Math.max(0, -e)));
+    }
+    for (var v = y0; v <= y1 + 1e-9; v += 0.1) {
+      add("line", { x1: pad.l, x2: W - pad.r, y1: Y(v), y2: Y(v), stroke: Math.abs(v - y0) < 1e-9 ? "var(--axis)" : "var(--grid)", "stroke-width": 1 });
+      add("text", { x: pad.l - 8, y: Y(v) + 4, "text-anchor": "end" }, Math.round(v * 100) + "%");
+    }
+    add("text", { x: (pad.l + W - pad.r) / 2, y: H - 4, "text-anchor": "middle", class: "axt" }, "Cost per script (log scale)");
+    var pts = M.map(function (m) { return { m: m, x: X(m.cost), y: Y(m.usable) }; }).sort(function (a, b) { return a.x - b.x; });
+    var boxes = pts.map(function (p) { return { x0: p.x - 9, x1: p.x + 9, y0: p.y - 9, y1: p.y + 9 }; });     // the dots themselves
+    function clash(box, skip) {
+      return boxes.some(function (o, i) { return i !== skip && box.x0 < o.x1 && box.x1 > o.x0 && box.y0 < o.y1 && box.y1 > o.y0; }) ||
+             box.x0 < pad.l || box.x1 > W - pad.r + 12 || box.y0 < 0 || box.y1 > H - pad.b;
+    }
+    pts.forEach(function (p, i) {
+      var m = p.m, w = m.name.length * 7.4, h = 16;
+      var c = add("circle", { cx: p.x, cy: p.y, r: 7, fill: SIZE[m.size].color, stroke: "var(--surface)", "stroke-width": 2 });
+      bindTip(c, "<b>" + esc(m.name) + "</b>" + SIZE[m.size].label + "<br>Usable rate: " + pct(m.usable, 1) + "<br>Cost per script: " + money(m.cost) + "<br>Time per script: " + secs(m.seconds));
+      // Candidate spots, nearest first: right, left, above, below, then further above and below.
+      var spots = [[p.x + 12, p.y + 4, "start"], [p.x - 12, p.y + 4, "end"], [p.x, p.y - 14, "middle"], [p.x, p.y + 24, "middle"],
+                   [p.x, p.y - 30, "middle"], [p.x, p.y + 40, "middle"], [p.x + 12, p.y - 14, "start"], [p.x - 12, p.y + 24, "end"]];
+      var pick = spots[0], box = null;
+      for (var k = 0; k < spots.length; k++) {
+        var s = spots[k], x0 = s[2] === "start" ? s[0] : s[2] === "end" ? s[0] - w : s[0] - w / 2;
+        var cand = { x0: x0, x1: x0 + w, y0: s[1] - h + 3, y1: s[1] + 3 };
+        if (!clash(cand, i)) { pick = s; box = cand; break; }
+      }
+      if (box) boxes.push(box);
+      add("text", { x: pick[0], y: pick[1], "text-anchor": pick[2], class: "lbl" }, m.name);
+    });
+    host.appendChild(svg);
+  }
+  (function () {
+    ["flagship", "small", "open"].forEach(function (k) {
+      if (!M.some(function (m) { return m.size === k; })) return;
+      var s = el("span"); s.appendChild(el("i", { class: "sw", style: "background:" + SIZE[k].color })); s.appendChild(document.createTextNode(SIZE[k].label));
+      $("scatterLegend").appendChild(s);
+    });
+    drawScatter();
+    var timer, lastWidth = $("scatter").clientWidth;
+    function redraw() { clearTimeout(timer); timer = setTimeout(function () { var w = $("scatter").clientWidth; if (w !== lastWidth) { lastWidth = w; drawScatter(); } }, 100); }
+    window.addEventListener("resize", redraw);
+    if (window.ResizeObserver) new ResizeObserver(redraw).observe($("scatter"));
+  })();
+
+  /* ---------- sub-score heat table ---------- */
+  (function () {
+    var t = $("heat"), head = el("tr"); head.appendChild(el("th", null, "Model"));
+    SUBS.forEach(function (s) { head.appendChild(el("th", { class: "num" }, s[1])); });
+    head.appendChild(el("th", { class: "num" }, "Usable"));
+    var thead = el("thead"); thead.appendChild(head); t.appendChild(thead);
+    var body = el("tbody");
+    ranked.forEach(function (m) {
+      var tr = el("tr"), name = el("td", null, m.name); tr.appendChild(name);
+      SUBS.forEach(function (s) {
+        var col = M.map(function (x) { return x.sub[s[0]]; }), lo = Math.min.apply(null, col), hi = Math.max.apply(null, col);
+        var share = hi > lo ? (m.sub[s[0]] - lo) / (hi - lo) : 0.5;
+        var td = el("td", { class: "cell", style: "background:color-mix(in oklab, var(--seq) " + Math.round(8 + share * 44) + "%, var(--surface))" }, m.sub[s[0]].toFixed(2));
+        bindTip(td, "<b>" + esc(m.name) + "</b>" + s[1] + ": " + m.sub[s[0]].toFixed(2) + " out of 4" + "<br>Range across models: " + lo.toFixed(2) + " to " + hi.toFixed(2));
+        tr.appendChild(td);
+      });
+      tr.appendChild(el("td", { class: "num" }, pct(m.usable)));
+      body.appendChild(tr);
+    });
+    t.appendChild(body);
+  })();
+
+  /* ---------- rating spread ---------- */
+  (function () {
+    var host = $("stackChart"), LEVELS = [[4, "Film as is", "var(--r4)"], [3, "Small edits", "var(--r3)"], [2, "Heavy rewrite", "var(--r2)"], [1, "Reject", "var(--r1)"]];
+    LEVELS.forEach(function (l) {
+      var s = el("span"); s.appendChild(el("i", { class: "sw sq", style: "background:" + l[2] })); s.appendChild(document.createTextNode(l[0] + " " + l[1]));
+      $("stackLegend").appendChild(s);
+    });
+    var rows = el("div", { class: "rows" });
+    ranked.forEach(function (m) {
+      var row = el("div", { class: "row" }); row.appendChild(nameCell(m));
+      var stack = el("div", { class: "stack" });
+      LEVELS.forEach(function (l) {
+        var share = m.ratings[String(l[0])];
+        var seg = el("div", { style: "flex:" + Math.max(share, 0.001) + " 1 0;background:" + l[2] + ";color:var(--on" + l[0] + ")" }, share >= 0.09 ? pct(share) : "");
+        bindTip(seg, "<b>" + esc(m.name) + "</b>" + l[0] + ", " + l[1] + ": " + pct(share, 1) + " of scripts");
+        stack.appendChild(seg);
+      });
+      row.appendChild(stack); rows.appendChild(row);
+    });
+    host.appendChild(rows);
+  })();
+
+  /* ---------- sections that need the full study ---------- */
+  (function () {
+    // short, data-driven sentences under the existing charts
+    var cheap = top1("cost", -1), dear = top1("cost");
+    $("costText").textContent = "A script costs from " + money(cheap.cost) + " (" + cheap.name + ") to " + money(dear.cost) + " (" + dear.name + ") to generate. Most of that is the reading the model does while researching: a script takes roughly 60,000 to 130,000 tokens of input across its searches and page reads." +
+      (M.every(function (m) { return m.cost_total != null; }) ? " Generating all " + D.tasks + " scripts costs $" + Math.round(M.reduce(function (s, m) { return s + m.cost_total; }, 0)) + " across the " + M.length + " models." : "");
+    var gaps = M.map(function (m) { var v = SUBS.map(function (s) { return m.sub[s[0]]; }); return { m: m, gap: Math.max.apply(null, v) - Math.min.apply(null, v) }; }).sort(function (a, b) { return b.gap - a.gap; });
+    var gm = gaps[0].m, hiS = SUBS.slice().sort(function (a, b) { return gm.sub[b[0]] - gm.sub[a[0]]; });
+    $("subText").textContent = cap(gm.name + " is the most uneven model: " + gm.sub[hiS[0][0]].toFixed(2) + " on " + hiS[0][1].toLowerCase() + " against " + gm.sub[hiS[4][0]].toFixed(2) + " on " + hiS[4][1].toLowerCase() + ".");
+    var most4 = M.slice().sort(function (a, b) { return b.ratings["4"] - a.ratings["4"]; })[0], most1 = M.slice().sort(function (a, b) { return b.ratings["1"] - a.ratings["1"]; })[0];
+    $("spreadText").textContent = cap(most4.name + " has the most scripts rated \"film as is\", " + pct(most4.ratings["4"]) + ", and " + most1.name + " the most rejections, " + pct(most1.ratings["1"]) + ".");
+    if (HAS_SE) $("ciText").textContent = "Here the standard errors average " + mean(M.map(function (m) { return m.usable_se * 100; })).toFixed(1) + " points on usable rate.";
+    if (!FULL) return;
+    document.querySelectorAll("[data-full]").forEach(function (n) { n.hidden = false; });
+
+    function heat(table, cols, sorted) {
+      var head = el("tr"); head.appendChild(el("th", null, "Model"));
+      cols.forEach(function (c) { head.appendChild(el("th", { class: "num" }, c.label)); });
+      var thead = el("thead"); thead.appendChild(head); table.appendChild(thead);
+      var body = el("tbody");
+      sorted.forEach(function (m) {
+        var tr = el("tr"); tr.appendChild(el("td", null, m.name));
+        cols.forEach(function (c) {
+          if (c.plain) { tr.appendChild(el("td", { class: "num" }, c.fmt(c.get(m)))); return; }
+          var all = M.map(c.get), lo = Math.min.apply(null, all), hi = Math.max.apply(null, all), v = c.get(m), share = hi > lo ? (v - lo) / (hi - lo) : 0.5;
+          var td = el("td", { class: "cell", style: "background:color-mix(in oklab, var(--seq) " + Math.round(8 + share * 44) + "%, var(--surface))" }, c.fmt(v));
+          bindTip(td, "<b>" + esc(m.name) + "</b>" + esc(c.tip || c.label) + ": " + c.fmt(v) + "<br>Range across models: " + c.fmt(lo) + " to " + c.fmt(hi));
+          tr.appendChild(td);
+        });
+        body.appendChild(tr);
+      });
+      table.appendChild(body);
+    }
+    var p0 = function (v) { return pct(v); }, p1 = function (v) { return pct(v, 1); };
+
+    // accuracy: dots with standard errors on a zoomed axis (dots, not bars, because the axis doesn't start at zero)
+    (function () {
+      var host = $("accChart"), lo = 0.75, hi = 1.0, ticks = [75, 80, 85, 90, 95, 100], rows = el("div", { class: "rows" });
+      function X(v) { return (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * 100; }
+      by("accuracy").forEach(function (m) {
+        var row = el("div", { class: "row" }); row.appendChild(nameCell(m));
+        var track = el("div", { class: "track" });
+        ticks.forEach(function (t, i) { track.appendChild(el("div", { class: "gridline" + (i === 0 ? " base" : ""), style: "left:" + X(t / 100) + "%" })); });
+        var aLo = m.accuracy - m.accuracy_se, aHi = m.accuracy + m.accuracy_se;
+        track.appendChild(el("div", { class: "whisker", style: "left:" + X(aLo) + "%;width:" + (X(aHi) - X(aLo)) + "%" }));
+        track.appendChild(el("div", { class: "dot", style: "left:" + X(m.accuracy) + "%;background:var(--s1)" }));
+        track.appendChild(el("div", { class: "val", style: "left:" + X(aHi) + "%" }, pct(m.accuracy, 1)));
+        bindTip(track, "<b>" + esc(m.name) + "</b>Accuracy: " + pct(m.accuracy, 1) + "<br>One standard error either side: " + pct(aLo, 1) + " to " + pct(aHi, 1) + "<br>Usable rate: " + pct(m.usable));
+        row.appendChild(track); rows.appendChild(row);
+      });
+      host.appendChild(rows);
+      var axis = el("div", { class: "axis" }); axis.appendChild(el("div")); var tk = el("div", { class: "ticks" });
+      ticks.forEach(function (t) { tk.appendChild(el("span", { style: "left:" + X(t / 100) + "%" }, t + "%")); }); axis.appendChild(tk); host.appendChild(axis);
+      var hiA = top1("accuracy"), loA = top1("accuracy", -1), top = ranked[0];
+      $("accText").textContent = cap("accuracy runs from " + pct(loA.accuracy, 1) + " for " + loA.name + " to " + pct(hiA.accuracy, 1) + " for " + hiA.name + ". ") +
+        (hiA === top ? "The model creators approve most often is also the most accurate." :
+          "The model creators approve most often, " + top.name + ", ranks " + (by("accuracy").indexOf(top) + 1) + " of " + M.length + " on accuracy, so the two measures don't move together: a creator can approve a script with an error they didn't notice.");
+    })();
+
+    // by niche
+    (function () {
+      var short = { "personal finance and business": "Finance", "technology and AI": "Technology", "fitness and exercise science": "Fitness", "science": "Science", "history and culture": "History" };
+      var cols = D.niches.map(function (n) { return { label: short[n] || n, tip: n, get: function (m) { return m.by_niche[n]; }, fmt: p0 }; });
+      cols.push({ label: "Overall", get: function (m) { return m.usable; }, fmt: p0, plain: true });
+      heat($("nicheTable"), cols, ranked);
+      var avg = D.niches.map(function (n) { return [short[n] || n, mean(M.map(function (m) { return m.by_niche[n]; }))]; }).sort(function (a, b) { return b[1] - a[1]; });
+      $("nicheText").textContent = cap("scripts were rated usable most often in " + avg[0][0].toLowerCase() + " (" + pct(avg[0][1]) + " across models) and least often in " + avg[avg.length - 1][0].toLowerCase() + " (" + pct(avg[avg.length - 1][1]) + "). ") +
+        "Each cell rests on 50 ratings from five creators, so single cells move a lot by chance.";
+    })();
+  })();
+
+  /* ---------- settings ---------- */
+  (function () {
+    var t = $("settings"), head = el("tr");
+    ["Model", "Lab", "Size", "Thinking", "Model id"].forEach(function (h) { head.appendChild(el("th", null, h)); });
+    var thead = el("thead"); thead.appendChild(head); t.appendChild(thead);
+    var body = el("tbody");
+    M.forEach(function (m) {
+      var tr = el("tr");
+      [m.name, m.lab, SIZE[m.size].label, m.thinking, m.id].forEach(function (v) { tr.appendChild(el("td", null, v)); });
+      body.appendChild(tr);
+    });
+    t.appendChild(body);
+  })();
+
+  // every figure carries the benchmark name and date, so a screenshot of one chart is still labelled
+  document.querySelectorAll("figure").forEach(function (f) {
+    var real = f.id === "examples";      // the example scripts are real model output
+    f.appendChild(el("div", { class: "fig-foot" }, "ShortForm-Bench • " + D.updated + (real ? " • Real model output" : "")));
+  });
+
+  $("foot").textContent = "ShortForm-Bench · built " + D.updated + ".";
+})();
+</script>
+</body>
+</html>
